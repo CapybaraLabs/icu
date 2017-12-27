@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'idea'
+    id 'com.gorylenko.gradle-git-properties' version '1.4.17'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+}
+
+
+group 'space.npstr.icu'
+version '0.0.1-SNAPSHOT'
+ext {
+    moduleName = 'icu'
+}
+
+mainClassName = 'space.npstr.icu.Main'
+
+sourceCompatibility = 9
+targetCompatibility = 9
+
+repositories {
+    jcenter()                               // JDA, maybe others
+    mavenCentral()                          // everything else
+    mavenLocal()                            // local maven repo, mostly for testing stuff
+    maven { url 'https://jitpack.io' }      // for getting builds from github
+}
+
+
+dependencies {
+    //@formatter:off
+    ext.jdaVersion              = '3.4.0_318'
+    ext.logbackVersion          = '1.2.3'
+    ext.sentryVersion           = '1.6.3'
+    ext.okhttpVersion           = '3.9.1'
+    ext.yamlVersion             = '1.19'
+    ext.sqlsauceVersion         = 'ed6ba65adc707db186abb1c8f0a6ae326cd23563'
+    ext.hibTypesVersion         = '1.2.0'
+    ext.jaxbApiVersion          = '2.3.0'
+    ext.caffeineVersion         = '2.6.0'
+    ext.dsProxyVersion          = '1.4.5'
+
+    compile group: 'net.dv8tion',    name: 'JDA',                 version: ext.jdaVersion        // discord API
+    compile group: 'ch.qos.logback', name: 'logback-classic',     version: ext.logbackVersion    // logging framework
+    compile group: 'io.sentry',      name: 'sentry-logback',      version: ext.sentryVersion     // error aggregation
+    compile group: 'com.squareup.okhttp3', name: 'okhttp',        version: ext.okhttpVersion     // http client
+    compile group: 'org.yaml',       name: 'snakeyaml',           version: ext.yamlVersion       // parse yaml files
+    compile group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion   // database lib
+    compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
+    compile group: 'javax.xml.bind', name: 'jaxb-api',            version: ext.jaxbApiVersion    // required by hibernate for java 9
+    compile group: 'com.github.ben-manes.caffeine', name:'caffeine', version:ext.caffeineVersion // caches
+    compile group: 'net.ttddyy',     name: 'datasource-proxy',    version: ext.dsProxyVersion    // log proxy for db queries
+
+    //@formatter:on
+}
+
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4.1'
+    distributionType = DistributionType.ALL
+}
+
+compileJava.dependsOn 'clean'
+compileJava.options.encoding = 'UTF-8'
+compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+
+shadowJar {
+    archiveName = "icu.jar"
+}
+
+processResources {
+    //inject values into app.properties
+    filesMatching("**/app.properties") {
+        filter ReplaceTokens, tokens: [
+                "project.version"   : project.version,
+                "project.groupId"   : project.group,
+                "project.artifactId": project.ext.moduleName,
+                "env.BUILD_NUMBER"  : (System.getenv('CI') ? System.getenv('BUILD_NUMBER') : 'DEV'),
+                "env.BUILD_TIME"    : System.currentTimeMillis() + ''
+        ]
+    }
+}

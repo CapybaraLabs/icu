@@ -1,0 +1,19 @@
+# build and IDE cruft
+.idea/*
+.gradle/*
+build/*
+out/*
+
+# log stuff
+logs/*
+*hs_err_pid*.log
+
+# secret files
+*sneaky.yaml
+
+# some development environment stuff, these makes intellij ultimate's persistence stuff work
+*hibernate.cfg.xml
+*persistence.xml
+
+# common symlinks
+icu.jar
