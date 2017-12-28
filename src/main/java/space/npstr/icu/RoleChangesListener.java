@@ -19,6 +19,7 @@ package space.npstr.icu;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
@@ -39,7 +40,7 @@ import space.npstr.sqlsauce.fp.types.Transfiguration;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -58,19 +59,27 @@ public class RoleChangesListener extends ListenerAdapter {
             = (t, e) -> log.error("Exception in thread {}", t.getName(), e);
 
     @Nonnull
-    private static Executor DEFAULT_EXEC = provideExecutor(0L);
+    private static ExecutorService DEFAULT_EXEC = provideExecutor(0L);
 
     //per guild
     @Nonnull
-    private final LoadingCache<Long, Executor> EXECUTORS = Caffeine.newBuilder()
+    private final LoadingCache<Long, ExecutorService> EXECUTORS = Caffeine.newBuilder()
             .expireAfterAccess(1, TimeUnit.HOURS)
+            .removalListener((Long key, ExecutorService value, RemovalCause cause) -> {
+                if (value != null) {
+                    value.shutdown();
+                }
+            })
             .build(RoleChangesListener::provideExecutor);
     @Nonnull
     private final DatabaseWrapper dbWrapper;
 
 
+    /**
+     * Creates a new Executor
+     */
     @Nonnull
-    private static Executor provideExecutor(long guildId) {
+    private static ExecutorService provideExecutor(long guildId) {
         return Executors.newSingleThreadExecutor(
                 r -> {
                     Thread t = new Thread(r, "role-changes-listener-" + guildId);
@@ -85,9 +94,12 @@ public class RoleChangesListener extends ListenerAdapter {
     }
 
 
+    /**
+     * Get an Executor from the cache.
+     */
     @Nonnull
-    private Executor getExecutor(@Nonnull Guild guild) {
-        Executor executor = EXECUTORS.get(guild.getIdLong());
+    private ExecutorService getExecutor(@Nonnull Guild guild) {
+        ExecutorService executor = EXECUTORS.get(guild.getIdLong());
         if (executor != null) {
             return executor;
         } else {
