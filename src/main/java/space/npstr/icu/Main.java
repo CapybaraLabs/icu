@@ -100,6 +100,7 @@ public class Main {
                         .logSlowQueryBySlf4j(10, TimeUnit.SECONDS, SLF4JLogLevel.WARN, "SlowQueryLog")
                         .multiline()
                 )
+                .setHibernateProperty("hibernate.hbm2ddl.auto", "update")
                 .build();
     }
 

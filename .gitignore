@@ -17,3 +17,5 @@ logs/*
 
 # common symlinks
 icu.jar
+
+postgres-data/

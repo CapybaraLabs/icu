@@ -1,8 +1,11 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
+
 plugins {
     id 'java'
     id 'application'
     id 'idea'
-    id 'com.gorylenko.gradle-git-properties' version '1.4.17'
+    id 'com.gorylenko.gradle-git-properties' version '1.4.20'
     id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
@@ -21,6 +24,7 @@ targetCompatibility = 9
 repositories {
     jcenter()                               // JDA, maybe others
     mavenCentral()                          // everything else
+    maven { url 'https://dl.bintray.com/napster/SqlSauce' }
     mavenLocal()                            // local maven repo, mostly for testing stuff
     maven { url 'https://jitpack.io' }      // for getting builds from github
 }
@@ -28,15 +32,14 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.4.0_318'
-    ext.logbackVersion          = '1.2.3'
-    ext.sentryVersion           = '1.6.3'
+    ext.jdaVersion              = '3.5.0_329'
+    ext.logbackVersion          = '1.3.0-alpha0'
+    ext.sentryVersion           = '1.6.4'
     ext.okhttpVersion           = '3.9.1'
     ext.yamlVersion             = '1.19'
-    ext.sqlsauceVersion         = 'ed6ba65adc707db186abb1c8f0a6ae326cd23563'
-    ext.hibTypesVersion         = '1.2.0'
+    ext.sqlsauceVersion         = '10c4a73904a049efbab972a5f605d022071d5422'
     ext.jaxbApiVersion          = '2.3.0'
-    ext.caffeineVersion         = '2.6.0'
+    ext.caffeineVersion         = '2.6.1'
     ext.dsProxyVersion          = '1.4.5'
 
     compile group: 'net.dv8tion',    name: 'JDA',                 version: ext.jdaVersion        // discord API
@@ -52,9 +55,6 @@ dependencies {
 
     //@formatter:on
 }
-
-import org.apache.tools.ant.filters.ReplaceTokens
-import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.4.1'
