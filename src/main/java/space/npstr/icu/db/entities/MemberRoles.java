@@ -29,6 +29,7 @@ import space.npstr.sqlsauce.entities.SaucedEntity;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 
 import javax.annotation.CheckReturnValue;
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
  */
 @Entity
 @Table(name = "member_roles")
+@Cacheable(value = false) //always fetch the most recent roles for a user
 public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
 
     private static final Logger log = LoggerFactory.getLogger(MemberRoles.class);

@@ -18,6 +18,9 @@
 package space.npstr.icu;
 
 import ch.qos.logback.classic.LoggerContext;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import net.dv8tion.jda.bot.entities.ApplicationInfo;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDAInfo;
@@ -49,6 +52,11 @@ public class Main {
     private static DatabaseWrapper dbWrapper;
     @Nullable
     private static ShardManager shardManager;
+
+    //use something constant as the key, like Main.class
+    public static final Cache<Object, ApplicationInfo> APP_INFO = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .build();
 
     public static void main(final String[] args) throws LoginException, InterruptedException {
         //just post the info to the console
@@ -87,6 +95,8 @@ public class Main {
                 .setToken(Config.C.discordToken)
                 .setGame(Game.watching("you"))
                 .addEventListeners(new RoleChangesListener(dbWrapper))
+                .addEventListeners(new CommandsListener(dbWrapper))
+                .addEventListeners(new EveryoneHereListener(dbWrapper))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
 
@@ -103,6 +113,11 @@ public class Main {
                         .multiline()
                 )
                 .setHibernateProperty("hibernate.hbm2ddl.auto", "update")
+                .setHibernateProperty("hibernate.cache.use_second_level_cache", "true")
+                .setHibernateProperty("hibernate.cache.use_query_cache", "true")
+                .setHibernateProperty("net.sf.ehcache.configurationResourceName", "/ehcache.xml")
+                .setHibernateProperty("hibernate.cache.provider_configuration_file_resource_path", "ehcache.xml")
+                .setHibernateProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.ehcache.EhCacheRegionFactory")
                 .build();
     }
 

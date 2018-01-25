@@ -54,7 +54,6 @@ public class Config {
     public final String jdbcUrl;
     public final String sentryDsn;
 
-    @SuppressWarnings(value = "unchecked")
     public Config() throws IOException {
 
         final File sneakyFile = new File("sneaky.yaml");

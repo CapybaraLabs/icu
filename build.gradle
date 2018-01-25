@@ -11,7 +11,7 @@ plugins {
 
 
 group 'space.npstr.icu'
-version '0.0.1-SNAPSHOT'
+version '0.0.2-SNAPSHOT'
 ext {
     moduleName = 'icu'
 }
@@ -54,6 +54,7 @@ dependencies {
     }   // database lib
     compile group: 'org.hibernate',  name: 'hibernate-core',      version: ext.hibernateVersion  // hibernate
     compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
+    compile group: 'org.hibernate',  name: 'hibernate-ehcache',   version: ext.hibernateVersion  // entity cacheing
     compile group: 'space.npstr',    name: 'annotations',         version: ext.annotationsVersion// advanced annotations
     compile group: 'javax.xml.bind', name: 'jaxb-api',            version: ext.jaxbApiVersion    // required by hibernate for java 9
     compile group: 'com.github.ben-manes.caffeine', name:'caffeine', version:ext.caffeineVersion // caches
