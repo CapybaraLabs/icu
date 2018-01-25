@@ -38,7 +38,6 @@ import space.npstr.sqlsauce.entities.MemberComposite;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 import space.npstr.sqlsauce.fp.types.Transfiguration;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,18 +50,14 @@ import java.util.stream.Stream;
  */
 public class RoleChangesListener extends ListenerAdapter {
 
-    @Nonnull
     private static final Logger log = LoggerFactory.getLogger(RoleChangesListener.class);
 
-    @Nonnull
     private static Thread.UncaughtExceptionHandler exceptionHandler
             = (t, e) -> log.error("Exception in thread {}", t.getName(), e);
 
-    @Nonnull
     private static ExecutorService DEFAULT_EXEC = provideExecutor(0L);
 
     //per guild
-    @Nonnull
     private final LoadingCache<Long, ExecutorService> EXECUTORS = Caffeine.newBuilder()
             .expireAfterAccess(1, TimeUnit.HOURS)
             .removalListener((Long key, ExecutorService value, RemovalCause cause) -> {
@@ -71,14 +66,12 @@ public class RoleChangesListener extends ListenerAdapter {
                 }
             })
             .build(RoleChangesListener::provideExecutor);
-    @Nonnull
     private final DatabaseWrapper dbWrapper;
 
 
     /**
      * Creates a new Executor
      */
-    @Nonnull
     private static ExecutorService provideExecutor(long guildId) {
         return Executors.newSingleThreadExecutor(
                 r -> {
@@ -89,7 +82,7 @@ public class RoleChangesListener extends ListenerAdapter {
     }
 
 
-    public RoleChangesListener(@Nonnull DatabaseWrapper dbWrapper) {
+    public RoleChangesListener(DatabaseWrapper dbWrapper) {
         this.dbWrapper = dbWrapper;
     }
 
@@ -97,8 +90,7 @@ public class RoleChangesListener extends ListenerAdapter {
     /**
      * Get an Executor from the cache.
      */
-    @Nonnull
-    private ExecutorService getExecutor(@Nonnull Guild guild) {
+    private ExecutorService getExecutor(Guild guild) {
         ExecutorService executor = EXECUTORS.get(guild.getIdLong());
         if (executor != null) {
             return executor;
@@ -140,7 +132,7 @@ public class RoleChangesListener extends ListenerAdapter {
     }
 
 
-    private void updateRoles(@Nonnull Member member) {
+    private void updateRoles(Member member) {
         dbWrapper.findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
     }
 

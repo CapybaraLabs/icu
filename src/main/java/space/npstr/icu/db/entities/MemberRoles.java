@@ -29,7 +29,6 @@ import space.npstr.sqlsauce.entities.SaucedEntity;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -53,7 +52,6 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     @EmbeddedId
     private MemberComposite id;
 
-    @Nonnull
     @Type(type = "array-list-long")
     @Column(name = "role_ids", columnDefinition = "bigint[]")
     private ArrayList<Long> roleIds = new ArrayList<>();
@@ -62,30 +60,26 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     public MemberRoles() {
     }
 
-    public static EntityKey<MemberComposite, MemberRoles> key(@Nonnull Member member) {
+    public static EntityKey<MemberComposite, MemberRoles> key(Member member) {
         return EntityKey.of(new MemberComposite(member), MemberRoles.class);
     }
 
-    @Nonnull
     @Override
-    public MemberRoles setId(@Nonnull MemberComposite id) {
+    public MemberRoles setId(MemberComposite id) {
         this.id = id;
         return this;
     }
 
-    @Nonnull
     @Override
     public MemberComposite getId() {
         return this.id;
     }
 
-    @Nonnull
     public Collection<Long> getRoleIds() {
         return Collections.unmodifiableList(roleIds);
     }
 
-    @Nonnull
-    public Collection<Role> getRoles(@Nonnull Function<Long, Guild> guildProvider) {
+    public Collection<Role> getRoles(Function<Long, Guild> guildProvider) {
         Guild g = guildProvider.apply(id.getGuildId());
         if (g == null) {
             log.warn("Guild provider returned a null guild for id {}, could not look up roles for user {}", id.getGuildId(), id.getUserId());
@@ -97,7 +91,6 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
                 .collect(Collectors.toSet());
     }
 
-    @Nonnull
     @CheckReturnValue
     public MemberRoles addRoleId(long roleId) {
         if (!roleIds.contains(roleId)) {
@@ -106,18 +99,16 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
         return this;
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles addRole(@Nonnull Role role) {
+    public MemberRoles addRole(Role role) {
         if (role.isManaged()) {
             return this; //dont touch managed roles, this is not our responsibility
         }
         return addRoleId(role.getIdLong());
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles addRoles(@Nonnull Collection<Role> roles) {
+    public MemberRoles addRoles(Collection<Role> roles) {
         MemberRoles result = this;
         for (Role role : roles) {
             result = addRole(role);
@@ -125,7 +116,6 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
         return result;
     }
 
-    @Nonnull
     @CheckReturnValue
     public MemberRoles removeRoleId(long roleId) {
         while (roleIds.contains(roleId)) {
@@ -134,15 +124,13 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
         return this;
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles removeRole(@Nonnull Role role) {
+    public MemberRoles removeRole(Role role) {
         return removeRoleId(role.getIdLong());
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles removeRoles(@Nonnull Collection<Role> roles) {
+    public MemberRoles removeRoles(Collection<Role> roles) {
         MemberRoles result = this;
         for (Role role : roles) {
             result = removeRole(role);
@@ -150,25 +138,22 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
         return result;
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles setRoleIds(@Nonnull Collection<Long> roleIds) {
+    public MemberRoles setRoleIds(Collection<Long> roleIds) {
         this.roleIds.clear();
         this.roleIds.addAll(roleIds);
         return this;
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles setRoles(@Nonnull Collection<Role> roles) {
+    public MemberRoles setRoles(Collection<Role> roles) {
         return setRoleIds(roles.stream()
                 .filter(role -> !role.isManaged()) //dont touch managed roles, this is not our responsibility
                 .map(ISnowflake::getIdLong).collect(Collectors.toSet()));
     }
 
-    @Nonnull
     @CheckReturnValue
-    public MemberRoles set(@Nonnull Member member) {
+    public MemberRoles set(Member member) {
         return setRoles(member.getRoles());
     }
 }

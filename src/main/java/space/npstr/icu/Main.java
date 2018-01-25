@@ -31,7 +31,7 @@ import space.npstr.icu.info.GitRepoState;
 import space.npstr.sqlsauce.DatabaseConnection;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -45,7 +45,9 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
+    @Nullable
     private static DatabaseWrapper dbWrapper;
+    @Nullable
     private static ShardManager shardManager;
 
     public static void main(final String[] args) throws LoginException, InterruptedException {
@@ -125,12 +127,10 @@ public class Main {
     public static final DateTimeFormatter TIME_IN_CENTRAL_EUROPE = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss z")
             .withZone(ZoneId.of("Europe/Berlin"));
 
-    @Nonnull
     public static String asTimeInCentralEurope(final long epochMillis) {
         return TIME_IN_CENTRAL_EUROPE.format(Instant.ofEpochMilli(epochMillis));
     }
 
-    @Nonnull
     private static String getVersionInfo() {
 
         return "\n\n"

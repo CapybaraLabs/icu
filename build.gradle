@@ -38,6 +38,7 @@ dependencies {
     ext.okhttpVersion           = '3.9.1'
     ext.yamlVersion             = '1.19'
     ext.sqlsauceVersion         = '10c4a73904a049efbab972a5f605d022071d5422'
+    ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'
     ext.caffeineVersion         = '2.6.1'
     ext.dsProxyVersion          = '1.4.5'
@@ -49,6 +50,7 @@ dependencies {
     compile group: 'org.yaml',       name: 'snakeyaml',           version: ext.yamlVersion       // parse yaml files
     compile group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion   // database lib
     compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
+    compile group: 'space.npstr',    name: 'annotations',         version: ext.annotationsVersion// advanced annotations
     compile group: 'javax.xml.bind', name: 'jaxb-api',            version: ext.jaxbApiVersion    // required by hibernate for java 9
     compile group: 'com.github.ben-manes.caffeine', name:'caffeine', version:ext.caffeineVersion // caches
     compile group: 'net.ttddyy',     name: 'datasource-proxy',    version: ext.dsProxyVersion    // log proxy for db queries
