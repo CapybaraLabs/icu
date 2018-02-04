@@ -37,7 +37,7 @@ dependencies {
     ext.sentryVersion           = '1.6.4'
     ext.okhttpVersion           = '3.9.1'
     ext.yamlVersion             = '1.19'
-    ext.sqlsauceVersion         = '10c4a73904a049efbab972a5f605d022071d5422'
+    ext.sqlsauceVersion         = '0.0.8'
     ext.hibernateVersion        = '5.2.12.Final'
     ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'

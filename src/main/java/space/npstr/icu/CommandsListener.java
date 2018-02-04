@@ -62,7 +62,7 @@ public class CommandsListener extends ListenerAdapter {
             return;
         }
 
-        if (!event.getMessage().isMentioned(event.getJDA().getSelfUser())) {
+        if (!event.getMessage().getMentionedUsers().contains(event.getJDA().getSelfUser())) {
             return;
         }
 
