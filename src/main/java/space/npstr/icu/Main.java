@@ -71,6 +71,8 @@ public class Main {
 
         dbManager = new DbManager();
         shardManagerManager = new ShardManagerManager(this::getDbWrapper);
+
+        getShardManager();//call this to start the JDA loops
     }
 
     public ShardManager getShardManager() {
