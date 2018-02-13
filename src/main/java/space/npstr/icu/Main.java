@@ -21,21 +21,15 @@ import ch.qos.logback.classic.LoggerContext;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.dv8tion.jda.bot.entities.ApplicationInfo;
-import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDAInfo;
-import net.dv8tion.jda.core.entities.Game;
-import net.ttddyy.dsproxy.listener.logging.SLF4JLogLevel;
-import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.icu.info.GitRepoState;
-import space.npstr.sqlsauce.DatabaseConnection;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import javax.annotation.Nullable;
-import javax.security.auth.login.LoginException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -48,17 +42,15 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    @Nullable
-    private static DatabaseWrapper dbWrapper;
-    @Nullable
-    private static ShardManager shardManager;
+    private final DbManager dbManager;
+    private final ShardManagerManager shardManagerManager;
 
     //use something constant as the key, like Main.class
     public static final Cache<Object, ApplicationInfo> APP_INFO = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
 
-    public static void main(final String[] args) throws LoginException, InterruptedException {
+    public static void main(final String[] args) {
         //just post the info to the console
         if (args.length > 0 &&
                 (args[0].equalsIgnoreCase("-v")
@@ -70,68 +62,50 @@ public class Main {
             System.exit(0);
         }
 
+        new Main();
+    }
+
+    private Main() {
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
         log.info(getVersionInfo());
 
-        DatabaseConnection databaseConnection = null;
-        int attempts = 0;
-        while (databaseConnection == null && attempts++ < 10) {
-            try {
-                databaseConnection = createDbConn();
-            } catch (Exception e) {
-                log.info("Failed to set up database, retrying...", e);
-                Thread.sleep(6000);
-            }
-        }
-        if (databaseConnection == null) {
-            log.error("Failed to set up database, exiting...");
-            System.exit(1);
-        }
-
-        dbWrapper = new DatabaseWrapper(databaseConnection);
-
-
-        DefaultShardManagerBuilder shardBuilder = new DefaultShardManagerBuilder()
-                .setToken(Config.C.discordToken)
-                .setGame(Game.watching("you"))
-                .addEventListeners(new RoleChangesListener(dbWrapper))
-                .addEventListeners(new CommandsListener(dbWrapper))
-                .addEventListeners(new EveryoneHereListener(dbWrapper))
-                .setEnableShutdownHook(false)
-                .setAudioEnabled(false);
-
-        shardManager = shardBuilder.build();
+        dbManager = new DbManager();
+        shardManagerManager = new ShardManagerManager(getDbWrapper());
     }
 
-    private static DatabaseConnection createDbConn() {
-        return new DatabaseConnection.Builder("postgres", Config.C.jdbcUrl)
-                .setDialect("org.hibernate.dialect.PostgreSQL95Dialect")
-                .addEntityPackage("space.npstr.icu.db.entities")
-                .setAppName("icu_" + AppInfo.getAppInfo().getVersionBuild())
-                .setProxyDataSourceBuilder(new ProxyDataSourceBuilder()
-                        .logSlowQueryBySlf4j(10, TimeUnit.SECONDS, SLF4JLogLevel.WARN, "SlowQueryLog")
-                        .multiline()
-                )
-                .setHibernateProperty("hibernate.hbm2ddl.auto", "update")
-                .setHibernateProperty("hibernate.cache.use_second_level_cache", "true")
-                .setHibernateProperty("hibernate.cache.use_query_cache", "true")
-                .setHibernateProperty("net.sf.ehcache.configurationResourceName", "/ehcache.xml")
-                .setHibernateProperty("hibernate.cache.provider_configuration_file_resource_path", "ehcache.xml")
-                .setHibernateProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.ehcache.EhCacheRegionFactory")
-                .build();
+    public ShardManager getShardManager() {
+        return shardManagerManager.getShardManager();
     }
 
-    private static final Thread SHUTDOWN_HOOK = new Thread(() -> {
+    public DatabaseWrapper getDbWrapper() {
+        return dbManager.getDefaultDbWrapper();
+    }
+
+    @SuppressWarnings("ConstantConditions") //it can be null during init
+    @Nullable
+    private ShardManagerManager getShardManagerManager() {
+        return shardManagerManager;
+    }
+
+    @SuppressWarnings("ConstantConditions") //it can be null during init
+    @Nullable
+    private DbManager getDbManager() {
+        return dbManager;
+    }
+
+    private final Thread SHUTDOWN_HOOK = new Thread(() -> {
         log.info("Shutdown hook triggered!");
         //okHttpClient claims that a shutdown isn't necessary
 
         //shutdown JDA
         log.info("Shutting down shards");
-        if (shardManager != null) shardManager.shutdown();
+        ShardManagerManager smm = getShardManagerManager();
+        if (smm != null) smm.shutdown();
 
         //shutdown DB
         log.info("Shutting down database");
-        dbWrapper.unwrap().shutdown();
+        DbManager dbm = getDbManager();
+        if (dbm != null) dbm.shutdown();
 
         //shutdown logback logger
         log.info("Shutting down logger :rip:");
