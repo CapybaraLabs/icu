@@ -70,7 +70,7 @@ public class Main {
         log.info(getVersionInfo());
 
         dbManager = new DbManager();
-        shardManagerManager = new ShardManagerManager(getDbWrapper());
+        shardManagerManager = new ShardManagerManager(this::getDbWrapper);
     }
 
     public ShardManager getShardManager() {
@@ -93,6 +93,7 @@ public class Main {
         return dbManager;
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final Thread SHUTDOWN_HOOK = new Thread(() -> {
         log.info("Shutdown hook triggered!");
         //okHttpClient claims that a shutdown isn't necessary

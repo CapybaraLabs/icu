@@ -29,6 +29,7 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.function.Supplier;
 
 /**
  * Created by napster on 13.02.18.
@@ -38,14 +39,13 @@ public class ShardManagerManager {
 
     private static final Logger log = LoggerFactory.getLogger(ShardManagerManager.class);
 
-
-    private final DatabaseWrapper dbWrapper;
+    private final Supplier<DatabaseWrapper> wrapperSupp;
     @Nullable
     private ShardManager shardManager;
     private final Object shardManagerInitLock = new Object();
 
-    public ShardManagerManager(DatabaseWrapper dbWrapper) {
-        this.dbWrapper = dbWrapper;
+    public ShardManagerManager(Supplier<DatabaseWrapper> wrapperSupp) {
+        this.wrapperSupp = wrapperSupp;
     }
 
     public ShardManager getShardManager() {
@@ -54,7 +54,7 @@ public class ShardManagerManager {
             synchronized (shardManagerInitLock) {
                 singleton = shardManager;
                 if (singleton == null) {
-                    shardManager = singleton = initShardManager(dbWrapper);
+                    shardManager = singleton = initShardManager(wrapperSupp, this::getShardManager);
                 }
             }
         }
@@ -69,13 +69,14 @@ public class ShardManagerManager {
         }
     }
 
-    private ShardManager initShardManager(DatabaseWrapper dbWrapper) {
+    private static ShardManager initShardManager(Supplier<DatabaseWrapper> wrapperSupplier,
+                                                 Supplier<ShardManager> shardManagerSupplier) {
         DefaultShardManagerBuilder shardBuilder = new DefaultShardManagerBuilder()
                 .setToken(Config.C.discordToken)
                 .setGame(Game.watching("you"))
-                .addEventListeners(new RoleChangesListener(dbWrapper))
-                .addEventListeners(new CommandsListener(dbWrapper))
-                .addEventListeners(new EveryoneHereListener(dbWrapper))
+                .addEventListeners(new RoleChangesListener(wrapperSupplier))
+                .addEventListeners(new CommandsListener(wrapperSupplier, shardManagerSupplier))
+                .addEventListeners(new EveryoneHereListener(wrapperSupplier))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {

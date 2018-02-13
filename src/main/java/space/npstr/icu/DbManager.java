@@ -64,7 +64,7 @@ public class DbManager {
         }
     }
 
-    private DatabaseWrapper initDefaultDbWrapper() {
+    private static DatabaseWrapper initDefaultDbWrapper() {
         try {
             DatabaseConnection databaseConnection = new DatabaseConnection.Builder("postgres", Config.C.jdbcUrl)
                     .setDialect("org.hibernate.dialect.PostgreSQL95Dialect")

@@ -34,6 +34,7 @@ import space.npstr.sqlsauce.fp.types.EntityKey;
 import space.npstr.sqlsauce.fp.types.Transfiguration;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,11 +46,11 @@ public class RoleChangesListener extends ThreadedListener {
     private static final Logger log = LoggerFactory.getLogger(RoleChangesListener.class);
 
 
-    private final DatabaseWrapper dbWrapper;
+    private final Supplier<DatabaseWrapper> wrapperSupp;
 
 
-    public RoleChangesListener(DatabaseWrapper dbWrapper) {
-        this.dbWrapper = dbWrapper;
+    public RoleChangesListener(Supplier<DatabaseWrapper> wrapperSupplier) {
+        this.wrapperSupp = wrapperSupplier;
     }
 
     @Override
@@ -85,14 +86,14 @@ public class RoleChangesListener extends ThreadedListener {
 
 
     private void updateRoles(Member member) {
-        dbWrapper.findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
+        wrapperSupp.get().findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
     }
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         getExecutor(event.getGuild()).execute(() -> {
             EntityKey<MemberComposite, MemberRoles> key = EntityKey.of(new MemberComposite(event.getMember()), MemberRoles.class);
-            MemberRoles memberRoles = dbWrapper.getOrCreate(key);
+            MemberRoles memberRoles = wrapperSupp.get().getOrCreate(key);
             Collection<Role> roles = memberRoles.getRoles(__ -> event.getGuild());
             log.debug("User {} joined guild {}, restoring roles: {}", event.getMember(), event.getGuild(), roles.isEmpty() ? "no roles" :
                     String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
@@ -122,7 +123,7 @@ public class RoleChangesListener extends ThreadedListener {
             Stream<Transfiguration<MemberComposite, MemberRoles>> stream = event.getGuild().getMemberCache().stream()
                     .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
 
-            dbWrapper.findApplyAndMergeAll(stream);
+            wrapperSupp.get().findApplyAndMergeAll(stream);
         });
     }
 
@@ -133,7 +134,7 @@ public class RoleChangesListener extends ThreadedListener {
                     .flatMap(guild -> guild.getMemberCache().stream())
                     .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
 
-            dbWrapper.findApplyAndMergeAll(stream);
+            wrapperSupp.get().findApplyAndMergeAll(stream);
         });
     }
 }

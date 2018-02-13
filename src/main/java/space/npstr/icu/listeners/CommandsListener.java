@@ -18,6 +18,7 @@
 package space.npstr.icu.listeners;
 
 import net.dv8tion.jda.bot.entities.ApplicationInfo;
+import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.IMentionable;
@@ -34,6 +35,7 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,10 +48,13 @@ public class CommandsListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(CommandsListener.class);
 
-    private final DatabaseWrapper dbWrapper;
+    private final Supplier<DatabaseWrapper> wrapperSupp;
+    private final Supplier<ShardManager> shardManagerSupp;
 
-    public CommandsListener(DatabaseWrapper wrapper) {
-        this.dbWrapper = wrapper;
+
+    public CommandsListener(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
+        this.wrapperSupp = wrapperSupplier;
+        this.shardManagerSupp = shardManagerSupplier;
     }
 
     @Override
@@ -75,7 +80,7 @@ public class CommandsListener extends ThreadedListener {
             return;
         }
 
-        if (!isAdmin(dbWrapper, event.getMember())) {
+        if (!isAdmin(wrapperSupp.get(), event.getMember())) {
             return;
         }
 
@@ -96,10 +101,10 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setEveryoneRole(r));
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setEveryoneRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as everyone role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("reset everyone")) {
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
             event.getChannel().sendMessage("Reset the everyone role").queue();
         } else if (content.contains("set here")) {
             if (msg.getMentionedRoles().isEmpty()) {
@@ -113,10 +118,10 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as here role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("reset here")) {
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
             event.getChannel().sendMessage("Reset the here role").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
@@ -144,7 +149,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addAdminRoles(rolesToAdd).addAdminUsers(membersToAdd));
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addAdminRoles(rolesToAdd).addAdminUsers(membersToAdd));
             List<String> added = Stream.concat(
                     membersToAdd.stream().map(m -> (IMentionable) m),
                     rolesToAdd.stream().map(r -> (IMentionable) r)
@@ -155,7 +160,7 @@ public class CommandsListener extends ThreadedListener {
             List<Role> rolesToRemove = new ArrayList<>(msg.getMentionedRoles());
             if (!rolesToRemove.isEmpty()) {
                 Role r = rolesToRemove.get(0);
-                dbWrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     if (guildSettings.isAdminRole(r)) {
                         event.getChannel().sendMessage("Removing role " + r.getName() + " " + r.getId() + " from admins.").queue();
                     } else {
@@ -172,7 +177,7 @@ public class CommandsListener extends ThreadedListener {
 
             if (!membersToRemove.isEmpty()) {
                 Member m = membersToRemove.get(0);
-                dbWrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     if (guildSettings.isAdminUser(m)) {
                         event.getChannel().sendMessage("Removing member " + m.getEffectiveName() + " " + m.getUser().getId() + " from admins.").queue();
                     } else {
@@ -193,10 +198,10 @@ public class CommandsListener extends ThreadedListener {
 
             if (!idsToRemove.isEmpty()) {
                 long id = idsToRemove.get(0);
-                dbWrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     Role r = guild.getRoleById(id);
                     Member m = guild.getMemberById(id);
-                    User u = guild.getJDA().getUserById(id); //todo use shard manager to look it up bot wide
+                    User u = shardManagerSupp.get().getUserById(id);
                     if (guildSettings.getAdminRoleIds().contains(id)) {
                         String roleName = r != null ? r.getName() : "unknown (role deleted ?)";
                         event.getChannel().sendMessage("Removing role " + roleName + " " + id + " from admins.").queue();
@@ -240,7 +245,7 @@ public class CommandsListener extends ThreadedListener {
             }
         } else if (content.contains("status") || content.contains("help")) {
             String output = "";
-            GuildSettings guildSettings = dbWrapper.getOrCreate(GuildSettings.key(guild));
+            GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
 
             Long everyoneRoleId = guildSettings.getEveryoneRoleId();
             if (everyoneRoleId != null) {
@@ -267,7 +272,7 @@ public class CommandsListener extends ThreadedListener {
                 if (m != null) {
                     name = m.getEffectiveName();
                 } else {
-                    User u = guild.getJDA().getUserById(userId); //todo use shard manager to look it up bot wide
+                    User u = shardManagerSupp.get().getUserById(userId);
                     name = u != null ? u.getName() : "unknown (left ?)";
                 }
                 admins.append("Member ").append(userId).append("\t").append(name).append("\n");

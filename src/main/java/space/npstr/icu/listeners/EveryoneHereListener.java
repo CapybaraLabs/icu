@@ -25,6 +25,8 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
+import java.util.function.Supplier;
+
 /**
  * Created by napster on 25.01.18.
  * <p>
@@ -32,10 +34,10 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  */
 public class EveryoneHereListener extends ThreadedListener {
 
-    private final DatabaseWrapper dbWrapper;
+    private final Supplier<DatabaseWrapper> wrapperSupp;
 
-    public EveryoneHereListener(DatabaseWrapper wrapper) {
-        this.dbWrapper = wrapper;
+    public EveryoneHereListener(Supplier<DatabaseWrapper> wrapperSupplier) {
+        this.wrapperSupp = wrapperSupplier;
     }
 
     @Override
@@ -53,10 +55,10 @@ public class EveryoneHereListener extends ThreadedListener {
             return;
         }
 
-        GuildSettings guildSettings = dbWrapper.getOrCreate(GuildSettings.key(guild));
+        GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
 
         //dont troll admins
-        if (CommandsListener.isAdmin(dbWrapper, event.getMember())) {
+        if (CommandsListener.isAdmin(wrapperSupp.get(), event.getMember())) {
             return;
         }
 
