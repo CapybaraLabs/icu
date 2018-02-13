@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Dennis Neufeld
+ * Copyright (C) 2017 - 2018 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,10 +17,6 @@
 
 package space.npstr.icu;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.ReadyEvent;
@@ -29,7 +25,6 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.MemberRoles;
@@ -39,65 +34,22 @@ import space.npstr.sqlsauce.fp.types.EntityKey;
 import space.npstr.sqlsauce.fp.types.Transfiguration;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Created by napster on 27.12.17.
  */
-public class RoleChangesListener extends ListenerAdapter {
+public class RoleChangesListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(RoleChangesListener.class);
 
-    private static Thread.UncaughtExceptionHandler exceptionHandler
-            = (t, e) -> log.error("Exception in thread {}", t.getName(), e);
 
-    private static ExecutorService DEFAULT_EXEC = provideExecutor(0L);
-
-    //per guild
-    private final LoadingCache<Long, ExecutorService> EXECUTORS = Caffeine.newBuilder()
-            .expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener((Long key, ExecutorService value, RemovalCause cause) -> {
-                if (value != null) {
-                    value.shutdown();
-                }
-            })
-            .build(RoleChangesListener::provideExecutor);
     private final DatabaseWrapper dbWrapper;
-
-
-    /**
-     * Creates a new Executor
-     */
-    private static ExecutorService provideExecutor(long guildId) {
-        return Executors.newSingleThreadExecutor(
-                r -> {
-                    Thread t = new Thread(r, "role-changes-listener-" + guildId);
-                    t.setUncaughtExceptionHandler(exceptionHandler);
-                    return t;
-                });
-    }
 
 
     public RoleChangesListener(DatabaseWrapper dbWrapper) {
         this.dbWrapper = dbWrapper;
-    }
-
-
-    /**
-     * Get an Executor from the cache.
-     */
-    private ExecutorService getExecutor(Guild guild) {
-        ExecutorService executor = EXECUTORS.get(guild.getIdLong());
-        if (executor != null) {
-            return executor;
-        } else {
-            log.warn("Cached executor for guild {} is somehow null, returning defualt executor", guild);
-            return DEFAULT_EXEC;
-        }
     }
 
     @Override

@@ -90,7 +90,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return hereRoleId;
     }
 
-    public GuildSettings setHereRoleId(Role role) {
+    public GuildSettings setHereRole(Role role) {
         this.hereRoleId = role.getIdLong();
         return this;
     }

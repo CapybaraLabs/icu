@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2018 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -22,7 +22,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
@@ -31,7 +30,7 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * <p>
  * Listens for messages containing everyone / here mentions and give the user using it that role to troll them back
  */
-public class EveryoneHereListener extends ListenerAdapter {
+public class EveryoneHereListener extends ThreadedListener {
 
     private final DatabaseWrapper dbWrapper;
 
@@ -41,6 +40,10 @@ public class EveryoneHereListener extends ListenerAdapter {
 
     @Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+        getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+    }
+
+    private void guildMessageReceived(GuildMessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }

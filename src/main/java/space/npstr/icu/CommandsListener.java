@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2018 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -26,7 +26,6 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GuildSettings;
@@ -42,7 +41,7 @@ import java.util.stream.Stream;
  * <p>
  * yeah this is ugly af without any command / context framework
  */
-public class CommandsListener extends ListenerAdapter {
+public class CommandsListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(CommandsListener.class);
 
@@ -54,6 +53,10 @@ public class CommandsListener extends ListenerAdapter {
 
     @Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+        getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+    }
+
+    private void guildMessageReceived(GuildMessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }
@@ -109,7 +112,7 @@ public class CommandsListener extends ListenerAdapter {
                 return;
             }
 
-            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRoleId(r));
+            dbWrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as here role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("reset here")) {
             dbWrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
@@ -292,6 +295,7 @@ public class CommandsListener extends ListenerAdapter {
     public static boolean isAdmin(DatabaseWrapper dbWrapper, Member member) {
         ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> member.getJDA().asBot().getApplicationInfo().complete());
         //bot owner?
+        //noinspection SimplifiableIfStatement
         if (appInfo != null && appInfo.getOwner().getIdLong() == member.getUser().getIdLong()) {
             return true;
         }
