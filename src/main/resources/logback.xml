@@ -59,6 +59,13 @@
         </encoder>
     </appender>
 
+    <!-- Send logs with the provided level or higher to sentry -->
+    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
     <!-- Gives us a nice JDA log with only JDA output -->
     <appender name="JDA" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/jda.log</file>
@@ -98,13 +105,6 @@
     <logger name="space.npstr" level="DEBUG" additivity="true">
         <appender-ref ref="STDOUTDEBUG"/>
     </logger>
-
-    <!-- Send logs with the provided level or higher to sentry -->
-    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-    </appender>
 
 
     <!-- shut up hibernate debug logs -->
