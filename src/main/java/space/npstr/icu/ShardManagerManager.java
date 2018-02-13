@@ -22,6 +22,9 @@ import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.entities.Game;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.listeners.CommandsListener;
+import space.npstr.icu.listeners.EveryoneHereListener;
+import space.npstr.icu.listeners.RoleChangesListener;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import javax.annotation.Nullable;

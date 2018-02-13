@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package space.npstr.icu;
+package space.npstr.icu.listeners;
 
 import net.dv8tion.jda.bot.entities.ApplicationInfo;
 import net.dv8tion.jda.core.Permission;
@@ -28,6 +28,7 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
