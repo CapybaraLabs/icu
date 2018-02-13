@@ -52,6 +52,10 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Column(name = "here_role_id", nullable = true)
     private Long hereRoleId;
 
+    @Nullable
+    @Column(name = "member_role_id", nullable = true)
+    private Long memberRoleId;
+
     @Type(type = "array-list-long")
     @Column(name = "admin_role_ids", columnDefinition = "bigint[]", nullable = false)
     private ArrayList<Long> adminRoleIds = new ArrayList<>();
@@ -97,6 +101,21 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
     public GuildSettings resetHereRole() {
         this.hereRoleId = null;
+        return this;
+    }
+
+    @Nullable
+    public Long getMemberRoleId() {
+        return memberRoleId;
+    }
+
+    public GuildSettings setMemberRole(Role role) {
+        this.memberRoleId = role.getIdLong();
+        return this;
+    }
+
+    public GuildSettings resetMemberRole() {
+        this.memberRoleId = null;
         return this;
     }
 

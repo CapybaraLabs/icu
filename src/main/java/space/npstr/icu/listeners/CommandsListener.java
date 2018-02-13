@@ -123,6 +123,63 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("reset here")) {
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
             event.getChannel().sendMessage("Reset the here role").queue();
+        } else if (content.contains("set memberrole")) {
+            Role r = null;
+            if (msg.getMentionedRoles().isEmpty()) {
+                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                    try {
+                        long roleId = Long.parseUnsignedLong(str);
+                        Role role = guild.getRoleById(roleId);
+                        if (role != null) {
+                            r = role;
+                            break;
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                if (r == null) {
+                    event.getChannel().sendMessage("Please mention the role you want to set or use its id. Use `list roles` to see all roles in this guild and their ids.").queue();
+                    return;
+                }
+            } else {
+                r = msg.getMentionedRoles().get(0);
+            }
+
+            Role memberRole = r;
+
+            if (!guild.getSelfMember().canInteract(memberRole)) {
+                event.getChannel().sendMessage("I cannot interact with that role. Please choose another one or move my bot role higher.").queue();
+                return;
+            }
+
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
+                Long memberRoleId = gs.getMemberRoleId();
+                if (memberRoleId != null) {
+                    Role current = guild.getRoleById(memberRoleId);
+                    if (current != null) {
+                        event.getChannel().sendMessage("Old role " + current.getAsMention() + " still in existence." +
+                                " You probably want to delete it to avoid users rejoining getting it reassigned, and also to" +
+                                " remove it from current holders.").queue();
+                    }
+                }
+                return gs.setMemberRole(memberRole);
+            });
+            event.getChannel().sendMessage("Set up " + memberRole.getAsMention() + " as the member role. All existing" +
+                    " and newly joining human users will get it assigned shortly.").queue();
+        } else if (content.contains("reset memberrole")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
+                Long memberRoleId = gs.getMemberRoleId();
+                if (memberRoleId != null) {
+                    Role current = guild.getRoleById(memberRoleId);
+                    if (current != null) {
+                        event.getChannel().sendMessage("Old role " + current.getAsMention() + " still in existence." +
+                                " You probably want to delete it to avoid users rejoining getting it reassigned, and also to" +
+                                " remove it from current holders.").queue();
+                    }
+                }
+                return gs.resetMemberRole();
+            });
+            event.getChannel().sendMessage("Reset the member role").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
             List<Member> membersToAdd = msg.getMentionedMembers().stream()
@@ -290,6 +347,8 @@ public class CommandsListener extends ThreadedListener {
             output += "`reset everyone`\n\t\tRemove the fake `@everyone` role.\n";
             output += "`set here @role`\n\t\tSet the fake `@here` role.\n";
             output += "`reset here`\n\t\tRemove the fake `@here` role.\n";
+            output += "`set memberrole @role or roleid`\n\t\tSet the member role that every human member will get assigned.\n";
+            output += "`reset memberrole `\n\t\tRemove the member role.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";

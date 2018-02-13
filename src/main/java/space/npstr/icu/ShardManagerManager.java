@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
+import space.npstr.icu.listeners.MemberRoleManager;
 import space.npstr.icu.listeners.RoleChangesListener;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
@@ -77,6 +78,7 @@ public class ShardManagerManager {
                 .addEventListeners(new RoleChangesListener(wrapperSupplier))
                 .addEventListeners(new CommandsListener(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new EveryoneHereListener(wrapperSupplier))
+                .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {
