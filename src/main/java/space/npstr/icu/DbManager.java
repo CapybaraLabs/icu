@@ -40,7 +40,7 @@ public class DbManager {
     private static final Logger log = LoggerFactory.getLogger(DbManager.class);
 
     @Nullable
-    private DatabaseWrapper defaultDbWrapper;
+    private volatile DatabaseWrapper defaultDbWrapper;
     private final Object defaultDbWrapperInitLock = new Object();
 
     public DatabaseWrapper getDefaultDbWrapper() {
@@ -58,8 +58,9 @@ public class DbManager {
 
     public void shutdown() {
         synchronized (defaultDbWrapperInitLock) {
-            if (defaultDbWrapper != null) {
-                defaultDbWrapper.unwrap().shutdown();
+            DatabaseWrapper wrapper = this.defaultDbWrapper;
+            if (wrapper != null) {
+                wrapper.unwrap().shutdown();
             }
         }
     }

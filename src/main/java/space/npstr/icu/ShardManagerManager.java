@@ -42,7 +42,7 @@ public class ShardManagerManager {
 
     private final Supplier<DatabaseWrapper> wrapperSupp;
     @Nullable
-    private ShardManager shardManager;
+    private volatile ShardManager shardManager;
     private final Object shardManagerInitLock = new Object();
 
     public ShardManagerManager(Supplier<DatabaseWrapper> wrapperSupp) {
@@ -64,8 +64,9 @@ public class ShardManagerManager {
 
     public void shutdown() {
         synchronized (shardManagerInitLock) {
-            if (shardManager != null) {
-                shardManager.shutdown();
+            ShardManager sm = this.shardManager;
+            if (sm != null) {
+                sm.shutdown();
             }
         }
     }
