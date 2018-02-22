@@ -34,7 +34,9 @@ import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -289,6 +291,86 @@ public class CommandsListener extends ThreadedListener {
 
             //nothing found for the given input
             event.getChannel().sendMessage("Please mention a role or member or use their id.").queue();
+        } else if (content.contains("add role")) {
+            //identify user
+            Set<User> mentionedUsers = msg.getMentionedMembers().stream()
+                    .map(Member::getUser)
+                    .filter(user -> !user.isBot())
+                    .collect(Collectors.toSet());
+            if (mentionedUsers.isEmpty()) {
+                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                    try {
+                        long userId = Long.parseUnsignedLong(str);
+                        User user = shardManagerSupp.get().getUserById(userId);
+                        if (user != null) {
+                            mentionedUsers.add(user);
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            if (mentionedUsers.isEmpty()) {
+                event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
+                return;
+            }
+            if (mentionedUsers.size() > 1) {
+                String out = "You specified several users. Which one of these did you mean?\n";
+                out += String.join("\n", mentionedUsers.stream()
+                        .map(user -> user.getAsMention() + " id(" + user.getId() + ")")
+                        .collect(Collectors.toSet()));
+                event.getChannel().sendMessage(out).queue();
+                return;
+            }
+            User targetUser = mentionedUsers.iterator().next();
+            Member targetMember = guild.getMember(targetUser);
+            if (targetMember == null) {
+                event.getChannel().sendMessage("User " + targetUser.getAsMention() + " is not a member of this guild.").queue();
+                return;
+            }
+
+            //identify role
+            Set<Role> mentionedRoles = new HashSet<>(msg.getMentionedRoles());
+            if (mentionedRoles.isEmpty()) {
+                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                    try {
+                        long roleId = Long.parseUnsignedLong(str);
+                        Role role = shardManagerSupp.get().getRoleById(roleId);
+                        if (role != null) {
+                            mentionedRoles.add(role);
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            if (mentionedRoles.isEmpty()) {
+                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                    mentionedRoles.addAll(guild.getRolesByName(str, true));
+                }
+            }
+            if (mentionedRoles.isEmpty()) {
+                event.getChannel().sendMessage("Please mention a role, or provide a role id or the role name anywhere in your message." +
+                        "\nYou can see all roles of this guild with `list roles`.").queue();
+                return;
+            }
+            if (mentionedRoles.size() > 1) {
+                String out = "You specified several roles. Which one of these did you mean?\n";
+                out += String.join("\n", mentionedRoles.stream()
+                        .map(role -> role.getAsMention() + " id(" + role.getId() + ")")
+                        .collect(Collectors.toSet()));
+                event.getChannel().sendMessage(out).queue();
+                return;
+            }
+            Role targetRole = mentionedRoles.iterator().next();
+
+            msg.getChannel().sendMessage("Giving user " + targetMember.getAsMention()
+                    + " role " + targetRole.getAsMention()).queue();
+            guild.getController().addSingleRoleToMember(targetMember, targetRole).queue(
+                    __ -> {
+                    },
+                    onFail -> msg.getChannel().sendMessage(msg.getAuthor().getAsMention() + ", could not give "
+                            + targetMember.getAsMention() + " role " + targetRole.getAsMention()).queue()
+            );
+
         } else if (content.contains("list roles")) {
             StringBuilder sb = new StringBuilder();
             for (Role r : guild.getRoles()) {
