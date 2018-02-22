@@ -389,15 +389,34 @@ public class CommandsListener extends ThreadedListener {
             );
 
         } else if (content.contains("list roles")) {
+            List<String> out = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (Role r : guild.getRoles()) {
+                if (sb.length() > 1900) {
+                    out.add(sb.toString());
+                    sb = new StringBuilder();
+                }
                 sb.append(r.getId()).append("\t").append(r.getName()).append("\n");
             }
+            if (sb.length() > 0) {
+                out.add(sb.toString());
+            }
 
-            if (sb.length() == 0) {
+            if (out.isEmpty()) {
                 event.getChannel().sendMessage("No roles found for this guild").queue();
             } else {
-                event.getChannel().sendMessage("This guild has the following roles:\n```\n" + sb.toString() + "\n```").queue();
+                boolean first = true;
+                for (String str : out) {
+                    String message;
+                    if (first) {
+                        message = "This guild has the following roles:\n";
+                        first = false;
+                    } else {
+                        message = "";
+                    }
+                    message += "```\n" + str + "\n```";
+                    event.getChannel().sendMessage(message).queue();
+                }
             }
         } else if (content.contains("status") || content.contains("help")) {
             String output = "";
