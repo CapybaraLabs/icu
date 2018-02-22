@@ -65,7 +65,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     private ArrayList<Long> adminUserIds = new ArrayList<>();
 
     //jpa / database wrapper
-    public GuildSettings() {
+    GuildSettings() {
     }
 
     public static EntityKey<Long, GuildSettings> key(Guild guild) {

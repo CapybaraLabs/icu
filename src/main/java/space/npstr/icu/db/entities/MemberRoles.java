@@ -51,6 +51,7 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
 
     private static final Logger log = LoggerFactory.getLogger(MemberRoles.class);
 
+    @SuppressWarnings("NullableProblems") //never null if correctly initialized by Hibernate / sqlsauce
     @EmbeddedId
     private MemberComposite id;
 
@@ -59,7 +60,7 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     private ArrayList<Long> roleIds = new ArrayList<>();
 
     //for jpa / database wrapper
-    public MemberRoles() {
+    MemberRoles() {
     }
 
     public static EntityKey<MemberComposite, MemberRoles> key(Member member) {
