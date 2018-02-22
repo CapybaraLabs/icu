@@ -372,12 +372,18 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
             Role targetRole = mentionedRoles.iterator().next();
+            if (!msg.getMember().canInteract(targetRole)) {
+                msg.getChannel().sendMessage("You cannot interact with role " + targetRole.getAsMention()).queue();
+                return;
+            }
+            if (!guild.getSelfMember().canInteract(targetRole)) {
+                msg.getChannel().sendMessage("I cannot interact with role " + targetRole.getAsMention()).queue();
+                return;
+            }
 
             msg.getChannel().sendMessage("Giving user " + targetMember.getAsMention()
                     + " role " + targetRole.getAsMention()).queue();
-            guild.getController().addSingleRoleToMember(targetMember, targetRole).queue(
-                    __ -> {
-                    },
+            guild.getController().addSingleRoleToMember(targetMember, targetRole).queue(null,
                     onFail -> msg.getChannel().sendMessage(msg.getAuthor().getAsMention() + ", could not give "
                             + targetMember.getAsMention() + " role " + targetRole.getAsMention()).queue()
             );
@@ -444,6 +450,7 @@ public class CommandsListener extends ThreadedListener {
             output += "`reset memberrole `\n\t\tRemove the member role.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
+            output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";
             output += "`status` or `help`\n\t\tShow current config and command help.\n";
             event.getChannel().sendMessage(output).queue();
