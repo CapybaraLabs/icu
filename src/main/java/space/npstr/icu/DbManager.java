@@ -40,6 +40,8 @@ public class DbManager {
     private static final Logger log = LoggerFactory.getLogger(DbManager.class);
 
     @Nullable
+    private DatabaseConnection connection;
+    @Nullable
     private volatile DatabaseWrapper defaultDbWrapper;
     private final Object defaultDbWrapperInitLock = new Object();
 
@@ -49,7 +51,8 @@ public class DbManager {
             synchronized (defaultDbWrapperInitLock) {
                 singleton = defaultDbWrapper;
                 if (singleton == null) {
-                    defaultDbWrapper = singleton = initDefaultDbWrapper();
+                    connection = initDefaultDbConn();
+                    defaultDbWrapper = singleton = new DatabaseWrapper(connection);
                 }
             }
         }
@@ -58,16 +61,15 @@ public class DbManager {
 
     public void shutdown() {
         synchronized (defaultDbWrapperInitLock) {
-            DatabaseWrapper wrapper = this.defaultDbWrapper;
-            if (wrapper != null) {
-                wrapper.unwrap().shutdown();
+            if (connection != null) {
+                connection.shutdown();
             }
         }
     }
 
-    private static DatabaseWrapper initDefaultDbWrapper() {
+    private static DatabaseConnection initDefaultDbConn() {
         try {
-            DatabaseConnection databaseConnection = new DatabaseConnection.Builder("postgres", Config.C.jdbcUrl)
+            return new DatabaseConnection.Builder("postgres", Config.C.jdbcUrl)
                     .setDialect("org.hibernate.dialect.PostgreSQL95Dialect")
                     .addEntityPackage("space.npstr.icu.db.entities")
                     .setAppName("icu_" + AppInfo.getAppInfo().getVersionBuild())
@@ -82,7 +84,6 @@ public class DbManager {
                     .setHibernateProperty("hibernate.cache.provider_configuration_file_resource_path", "ehcache.xml")
                     .setHibernateProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.ehcache.EhCacheRegionFactory")
                     .build();
-            return new DatabaseWrapper(databaseConnection);
         } catch (Exception e) {
             String message = "Failed to set up database";
             log.error(message, e);
