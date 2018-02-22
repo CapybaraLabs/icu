@@ -312,10 +312,17 @@ public class CommandsListener extends ThreadedListener {
             }
             if (mentionedUsers.isEmpty()) {
                 for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
+                    String withSpaces = str.replaceAll("_", " ");
                     mentionedUsers.addAll(guild.getMembersByName(str, false).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
+                    mentionedUsers.addAll(guild.getMembersByName(withSpaces, false).stream()
+                            .map(Member::getUser)
+                            .collect(Collectors.toSet()));
                     mentionedUsers.addAll(guild.getMembersByNickname(str, false).stream()
+                            .map(Member::getUser)
+                            .collect(Collectors.toSet()));
+                    mentionedUsers.addAll(guild.getMembersByNickname(withSpaces, false).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
                 }
@@ -355,7 +362,9 @@ public class CommandsListener extends ThreadedListener {
             }
             if (mentionedRoles.isEmpty()) {
                 for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
+                    String withSpaces = str.replace("_", " ");
                     mentionedRoles.addAll(guild.getRolesByName(str, true));
+                    mentionedRoles.addAll(guild.getRolesByName(withSpaces, true));
                 }
             }
             if (mentionedRoles.isEmpty()) {
