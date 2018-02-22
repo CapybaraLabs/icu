@@ -313,16 +313,16 @@ public class CommandsListener extends ThreadedListener {
             if (mentionedUsers.isEmpty()) {
                 for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     String withSpaces = str.replaceAll("_", " ");
-                    mentionedUsers.addAll(guild.getMembersByName(str, false).stream()
+                    mentionedUsers.addAll(guild.getMembersByName(str, true).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByName(withSpaces, false).stream()
+                    mentionedUsers.addAll(guild.getMembersByName(withSpaces, true).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByNickname(str, false).stream()
+                    mentionedUsers.addAll(guild.getMembersByNickname(str, true).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByNickname(withSpaces, false).stream()
+                    mentionedUsers.addAll(guild.getMembersByNickname(withSpaces, true).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
                 }
