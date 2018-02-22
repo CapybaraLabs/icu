@@ -292,13 +292,14 @@ public class CommandsListener extends ThreadedListener {
             //nothing found for the given input
             event.getChannel().sendMessage("Please mention a role or member or use their id.").queue();
         } else if (content.contains("add role")) {
+            String adjustedContent = content.replace("add role", "");
             //identify user
             Set<User> mentionedUsers = msg.getMentionedMembers().stream()
                     .map(Member::getUser)
                     .filter(user -> !user.isBot())
                     .collect(Collectors.toSet());
             if (mentionedUsers.isEmpty()) {
-                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     try {
                         long userId = Long.parseUnsignedLong(str);
                         User user = shardManagerSupp.get().getUserById(userId);
@@ -310,7 +311,7 @@ public class CommandsListener extends ThreadedListener {
                 }
             }
             if (mentionedUsers.isEmpty()) {
-                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     mentionedUsers.addAll(guild.getMembersByName(str, false).stream()
                             .map(Member::getUser)
                             .collect(Collectors.toSet()));
@@ -341,7 +342,7 @@ public class CommandsListener extends ThreadedListener {
             //identify role
             Set<Role> mentionedRoles = new HashSet<>(msg.getMentionedRoles());
             if (mentionedRoles.isEmpty()) {
-                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     try {
                         long roleId = Long.parseUnsignedLong(str);
                         Role role = shardManagerSupp.get().getRoleById(roleId);
@@ -353,7 +354,7 @@ public class CommandsListener extends ThreadedListener {
                 }
             }
             if (mentionedRoles.isEmpty()) {
-                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     mentionedRoles.addAll(guild.getRolesByName(str, true));
                 }
             }
