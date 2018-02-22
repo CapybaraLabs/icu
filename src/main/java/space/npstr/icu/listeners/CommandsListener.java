@@ -310,6 +310,16 @@ public class CommandsListener extends ThreadedListener {
                 }
             }
             if (mentionedUsers.isEmpty()) {
+                for (String str : content.split("\\p{javaSpaceChar}+")) {
+                    mentionedUsers.addAll(guild.getMembersByName(str, false).stream()
+                            .map(Member::getUser)
+                            .collect(Collectors.toSet()));
+                    mentionedUsers.addAll(guild.getMembersByNickname(str, false).stream()
+                            .map(Member::getUser)
+                            .collect(Collectors.toSet()));
+                }
+            }
+            if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
