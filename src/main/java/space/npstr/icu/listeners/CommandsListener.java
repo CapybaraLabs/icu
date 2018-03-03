@@ -91,7 +91,10 @@ public class CommandsListener extends ThreadedListener {
 
         log.info("Mention received: " + msg.getContentDisplay());
 
-        if (content.contains("set everyone")) {
+        if (content.contains("reset everyone")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
+            event.getChannel().sendMessage("Reset the everyone role").queue();
+        } else if (content.contains("set everyone")) {
             if (msg.getMentionedRoles().isEmpty()) {
                 event.getChannel().sendMessage("Please mention the role you want to set").queue();
                 return;
@@ -105,9 +108,9 @@ public class CommandsListener extends ThreadedListener {
 
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setEveryoneRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as everyone role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
-        } else if (content.contains("reset everyone")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
-            event.getChannel().sendMessage("Reset the everyone role").queue();
+        } else if (content.contains("reset here")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
+            event.getChannel().sendMessage("Reset the here role").queue();
         } else if (content.contains("set here")) {
             if (msg.getMentionedRoles().isEmpty()) {
                 event.getChannel().sendMessage("Please mention the role you want to set").queue();
@@ -122,9 +125,20 @@ public class CommandsListener extends ThreadedListener {
 
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as here role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
-        } else if (content.contains("reset here")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
-            event.getChannel().sendMessage("Reset the here role").queue();
+        } else if (content.contains("reset memberrole")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
+                Long memberRoleId = gs.getMemberRoleId();
+                if (memberRoleId != null) {
+                    Role current = guild.getRoleById(memberRoleId);
+                    if (current != null) {
+                        event.getChannel().sendMessage("Old role " + current.getAsMention() + " still in existence." +
+                                " You probably want to delete it to avoid users rejoining getting it reassigned, and also to" +
+                                " remove it from current holders.").queue();
+                    }
+                }
+                return gs.resetMemberRole();
+            });
+            event.getChannel().sendMessage("Reset the member role").queue();
         } else if (content.contains("set memberrole")) {
             Role r = null;
             if (msg.getMentionedRoles().isEmpty()) {
@@ -168,20 +182,6 @@ public class CommandsListener extends ThreadedListener {
             });
             event.getChannel().sendMessage("Set up " + memberRole.getAsMention() + " as the member role. All existing" +
                     " and newly joining human users will get it assigned shortly.").queue();
-        } else if (content.contains("reset memberrole")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
-                Long memberRoleId = gs.getMemberRoleId();
-                if (memberRoleId != null) {
-                    Role current = guild.getRoleById(memberRoleId);
-                    if (current != null) {
-                        event.getChannel().sendMessage("Old role " + current.getAsMention() + " still in existence." +
-                                " You probably want to delete it to avoid users rejoining getting it reassigned, and also to" +
-                                " remove it from current holders.").queue();
-                    }
-                }
-                return gs.resetMemberRole();
-            });
-            event.getChannel().sendMessage("Reset the member role").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
             List<Member> membersToAdd = msg.getMentionedMembers().stream()
@@ -470,12 +470,12 @@ public class CommandsListener extends ThreadedListener {
             }
 
             output += "\n\nCommands: (always mention me)\n\n";
-            output += "`set everyone @role`\n\t\tSet the fake `@everyone` role.\n";
             output += "`reset everyone`\n\t\tRemove the fake `@everyone` role.\n";
-            output += "`set here @role`\n\t\tSet the fake `@here` role.\n";
+            output += "`set everyone @role`\n\t\tSet the fake `@everyone` role.\n";
             output += "`reset here`\n\t\tRemove the fake `@here` role.\n";
-            output += "`set memberrole @role or roleid`\n\t\tSet the member role that every human member will get assigned.\n";
+            output += "`set here @role`\n\t\tSet the fake `@here` role.\n";
             output += "`reset memberrole `\n\t\tRemove the member role.\n";
+            output += "`set memberrole @role or roleid`\n\t\tSet the member role that every human member will get assigned.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
             output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
