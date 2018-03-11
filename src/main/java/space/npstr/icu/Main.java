@@ -44,6 +44,7 @@ public class Main {
 
     private final DbManager dbManager;
     private final ShardManagerManager shardManagerManager;
+    private final GlobalBanSync globalBanSync;
 
     //use something constant as the key, like Main.class
     public static final Cache<Object, ApplicationInfo> APP_INFO = Caffeine.newBuilder()
@@ -71,6 +72,7 @@ public class Main {
 
         dbManager = new DbManager();
         shardManagerManager = new ShardManagerManager(this::getDbWrapper);
+        globalBanSync = new GlobalBanSync(this::getDbWrapper, this::getShardManager);
 
         getShardManager();//call this to start the JDA loops
     }
