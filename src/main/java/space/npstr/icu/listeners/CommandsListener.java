@@ -460,6 +460,18 @@ public class CommandsListener extends ThreadedListener {
                 output += "Fake `@here` role not configured.\n";
             }
 
+            Long memberRoleId = guildSettings.getMemberRoleId();
+            if (memberRoleId != null) {
+                Role memberRole = guild.getRoleById(memberRoleId);
+                if (memberRole != null) {
+                    output += "Member role: " + memberRole.getAsMention() + "\n";
+                } else {
+                    output += "Member role configured (id " + memberRoleId + "), but could not be found. Did you delete it?\n";
+                }
+            } else {
+                output += "Member role not configured.\n";
+            }
+
             Long reportingChannelId = guildSettings.getReportingChannelId();
             if (reportingChannelId != null) {
                 TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
