@@ -22,6 +22,7 @@ import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.entities.Game;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.listeners.BanWarningListener;
 import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
 import space.npstr.icu.listeners.MemberRoleManager;
@@ -80,6 +81,7 @@ public class ShardManagerManager {
                 .addEventListeners(new CommandsListener(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new EveryoneHereListener(wrapperSupplier))
                 .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
+                .addEventListeners(new BanWarningListener(wrapperSupplier, shardManagerSupplier))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {
