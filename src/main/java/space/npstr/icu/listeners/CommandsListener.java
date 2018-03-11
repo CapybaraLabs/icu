@@ -493,7 +493,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
             User targetUser = mentionedUsers.iterator().next();
-            String reason = content.split("global ban")[1].trim();
+            String reason = (content + " ").split("global ban")[1].trim();
 
             if (reason.isEmpty()) {
                 event.getChannel().sendMessage("Please provide a reason for the global ban.").queue();
