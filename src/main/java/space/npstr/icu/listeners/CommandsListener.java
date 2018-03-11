@@ -502,7 +502,7 @@ public class CommandsListener extends ThreadedListener {
 
             wrapperSupp.get().findApplyAndMerge(GlobalBan.key(targetUser), ban -> ban.setReason(reason));
             event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
-                    + " added to global bans with reason " + reason).queue();
+                    + " added to global bans with reason: **" + reason + "**").queue();
         } else if (content.contains("global unban")) {
             if (!isBotOwner(event.getAuthor())) {
                 event.getChannel().sendMessage("Sorry, adding and removing global bans is reserved for the bot owner").queue();
@@ -576,7 +576,7 @@ public class CommandsListener extends ThreadedListener {
             if (guildSettings.areGlobalBansEnabled()) {
                 output += "Globale bans are **enabled**.\n";
             } else {
-                output += "Globale bans are disable.\n";
+                output += "Globale bans are disabled.\n";
             }
 
             StringBuilder admins = new StringBuilder();
@@ -618,9 +618,9 @@ public class CommandsListener extends ThreadedListener {
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";
             output += "`enable global bans`\n\t\tEnable global ban list curated by the bot owner.\n";
             output += "`disable global bans`\n\t\tDisable global ban list curated by the bot owner.\n";
-            output += "`list global bans`\n\t\tList all globally banned users with reasons.";
-            output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).";
-            output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).";
+            output += "`list global bans`\n\t\tList all globally banned users with reasons.\n";
+            output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).\n";
+            output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
             output += "`status` or `help`\n\t\tShow current config and command help.\n";
             event.getChannel().sendMessage(output).queue();
         }
