@@ -5,7 +5,7 @@ plugins {
     id 'java'
     id 'application'
     id 'idea'
-    id 'com.gorylenko.gradle-git-properties' version '1.4.20'
+    id 'com.gorylenko.gradle-git-properties' version '1.4.21'
     id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
@@ -32,27 +32,24 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.5.0_338'
+    ext.jdaVersion              = '3.5.1_347'
     ext.logbackVersion          = '1.2.3'
-    ext.sentryVersion           = '1.6.8'
-    ext.okhttpVersion           = '3.9.1'
-    ext.yamlVersion             = '1.19'
-    ext.sqlsauceVersion         = '0.0.11'
-    ext.hibernateVersion        = '5.2.12.Final'
+    ext.sentryVersion           = '1.7.0'
+    ext.okhttpVersion           = '3.10.0'
+    ext.yamlVersion             = '1.20'
+    ext.sqlsauceVersion         = '0.0.13'
+    ext.hibernateVersion        = '5.2.14.Final'
     ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'
-    ext.caffeineVersion         = '2.6.1'
-    ext.dsProxyVersion          = '1.4.6'
+    ext.caffeineVersion         = '2.6.2'
+    ext.dsProxyVersion          = '1.4.7'
 
     compile group: 'net.dv8tion',    name: 'JDA',                 version: ext.jdaVersion        // discord API
     compile group: 'ch.qos.logback', name: 'logback-classic',     version: ext.logbackVersion    // logging framework
     compile group: 'io.sentry',      name: 'sentry-logback',      version: ext.sentryVersion     // error aggregation
     compile group: 'com.squareup.okhttp3', name: 'okhttp',        version: ext.okhttpVersion     // http client
     compile group: 'org.yaml',       name: 'snakeyaml',           version: ext.yamlVersion       // parse yaml files
-    compile (group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion) {
-        exclude (group: 'org.hibernate', module: 'hibernate-core')
-    }   // database lib
-    compile group: 'org.hibernate',  name: 'hibernate-core',      version: ext.hibernateVersion  // hibernate
+    compile (group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion) // database lib
     compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
     compile group: 'org.hibernate',  name: 'hibernate-ehcache',   version: ext.hibernateVersion  // entity cacheing
     compile group: 'space.npstr',    name: 'annotations',         version: ext.annotationsVersion// advanced annotations
@@ -64,7 +61,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+    gradleVersion = '4.6'
     distributionType = DistributionType.ALL
 }
 
