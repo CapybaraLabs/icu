@@ -25,6 +25,7 @@ import net.dv8tion.jda.core.entities.IMentionable;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import org.slf4j.Logger;
@@ -182,6 +183,20 @@ public class CommandsListener extends ThreadedListener {
             });
             event.getChannel().sendMessage("Set up " + memberRole.getAsMention() + " as the member role. All existing" +
                     " and newly joining human users will get it assigned shortly.").queue();
+        } else if (content.contains("reset reporting")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetReportingChannel);
+            event.getChannel().sendMessage("Reset the reporting channel").queue();
+        } else if (content.contains("set reporting")) {
+
+            TextChannel reportingChannel = msg.getMentionedChannels().stream().findFirst().orElse(msg.getTextChannel());
+
+            if (!reportingChannel.canTalk()) {
+                event.getChannel().sendMessage("I can't talk in " + reportingChannel.getAsMention()).queue();
+                return;
+            }
+
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setReportingChannel(reportingChannel));
+            event.getChannel().sendMessage("Set up " + reportingChannel.getAsMention() + " as the reporting channel 🚔").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
             List<Member> membersToAdd = msg.getMentionedMembers().stream()
@@ -443,6 +458,18 @@ public class CommandsListener extends ThreadedListener {
                 output += "Fake `@here` role: <@&" + hereRoleId + ">\n";
             } else {
                 output += "Fake `@here` role not configured.\n";
+            }
+
+            Long reportingChannelId = guildSettings.getReportingChannelId();
+            if (reportingChannelId != null) {
+                TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
+                if (reportingChannel != null) {
+                    output += "Reporting channel is " + reportingChannel.getAsMention() + ".\n";
+                } else {
+                    output += "Reporting channel has been configured with id " + reportingChannelId + ", but it does not exist.\n";
+                }
+            } else {
+                output += "Reporting channel not configured.\n";
             }
 
             StringBuilder admins = new StringBuilder();

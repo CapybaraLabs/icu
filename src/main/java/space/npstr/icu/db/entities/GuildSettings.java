@@ -20,6 +20,7 @@ package space.npstr.icu.db.entities;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
+import net.dv8tion.jda.core.entities.TextChannel;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
@@ -63,6 +64,10 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Type(type = "array-list-long")
     @Column(name = "admin_user_ids", columnDefinition = "bigint[]", nullable = false)
     private ArrayList<Long> adminUserIds = new ArrayList<>();
+
+    @Nullable
+    @Column(name = "reporting_channel_id", nullable = true)
+    private Long reportingChannelId;
 
     //jpa / database wrapper
     GuildSettings() {
@@ -207,4 +212,18 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return adminUserIds.contains(member.getUser().getIdLong());
     }
 
+    @Nullable
+    public Long getReportingChannelId() {
+        return reportingChannelId;
+    }
+
+    public GuildSettings setReportingChannel(TextChannel reportingChannel) {
+        this.reportingChannelId = reportingChannel.getIdLong();
+        return this;
+    }
+
+    public GuildSettings resetReportingChannel() {
+        this.reportingChannelId = null;
+        return this;
+    }
 }
