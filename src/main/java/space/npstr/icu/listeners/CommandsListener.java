@@ -31,13 +31,16 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
+import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -309,47 +312,16 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("add role")) {
             String adjustedContent = content.replace("add role", "");
             //identify user
-            Set<User> mentionedUsers = msg.getMentionedMembers().stream()
-                    .map(Member::getUser)
-                    .filter(user -> !user.isBot())
-                    .collect(Collectors.toSet());
-            if (mentionedUsers.isEmpty()) {
-                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
-                    try {
-                        long userId = Long.parseUnsignedLong(str);
-                        User user = shardManagerSupp.get().getUserById(userId);
-                        if (user != null) {
-                            mentionedUsers.add(user);
-                        }
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-            }
-            if (mentionedUsers.isEmpty()) {
-                for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
-                    String withSpaces = str.replaceAll("_", " ");
-                    mentionedUsers.addAll(guild.getMembersByName(str, true).stream()
-                            .map(Member::getUser)
-                            .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByName(withSpaces, true).stream()
-                            .map(Member::getUser)
-                            .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByNickname(str, true).stream()
-                            .map(Member::getUser)
-                            .collect(Collectors.toSet()));
-                    mentionedUsers.addAll(guild.getMembersByNickname(withSpaces, true).stream()
-                            .map(Member::getUser)
-                            .collect(Collectors.toSet()));
-                }
-            }
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
             if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
+            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
-                        .map(user -> user.getAsMention() + " id(" + user.getId() + ")")
+                        .map(user -> user.getAsMention() + " id(" + user.getId() + ")" + user.getName())
                         .collect(Collectors.toSet()));
                 event.getChannel().sendMessage(out).queue();
                 return;
@@ -442,6 +414,123 @@ public class CommandsListener extends ThreadedListener {
                     event.getChannel().sendMessage(message).queue();
                 }
             }
+        } else if (content.contains("enable global bans")) {
+            if (!guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                event.getChannel().sendMessage("I require the ban permission for this feature.").queue();
+                return;
+            }
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::enableGlobalBans);
+            event.getChannel().sendMessage("Global bans have been enabled for this guild.").queue();
+        } else if (content.contains("disable global bans")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::disableGlobalBans);
+            event.getChannel().sendMessage("Global bans have been disabled for this guild.").queue();
+        } else if (content.contains("list global bans")) {
+            List<GlobalBan> globalBans = wrapperSupp.get().loadAll(GlobalBan.class);
+            globalBans.sort(Comparator.comparingLong(GlobalBan::getCreated));
+
+            List<String> out = new ArrayList<>();
+            StringBuilder sb = new StringBuilder();
+            for (GlobalBan ban : globalBans) {
+                if (sb.length() > 1800) {
+                    out.add(sb.toString());
+                    sb = new StringBuilder();
+                }
+                User bannedUser = shardManagerSupp.get().getUserById(ban.getUserId());
+                if (bannedUser == null) {
+                    try {
+                        bannedUser = shardManagerSupp.get().getShardCache().iterator().next().retrieveUserById(ban.getUserId())
+                                .submit().get(30, TimeUnit.SECONDS);
+                    } catch (Exception ignored) {
+                    }
+                }
+                String name = bannedUser == null ? "Unknown User" : bannedUser.getName();
+
+                sb.append(Main.asTimeInCentralEurope(ban.getCreated())).append("\t")
+                        .append("<@").append(ban.getUserId()).append(">\t")
+                        .append(name).append("\t")
+                        .append(ban.getReason()).append("\n");
+            }
+            if (sb.length() > 0) {
+                out.add(sb.toString());
+            }
+
+            if (out.isEmpty()) {
+                event.getChannel().sendMessage("There are no global bans at this point").queue();
+            } else {
+                boolean first = true;
+                for (String str : out) {
+                    String message;
+                    if (first) {
+                        message = "Listing all global bans\n";
+                        first = false;
+                    } else {
+                        message = "";
+                    }
+                    message += "```\n" + str + "\n```";
+                    event.getChannel().sendMessage(message).queue();
+                }
+            }
+        } else if (content.contains("global ban")) {
+            if (!isBotOwner(event.getAuthor())) {
+                event.getChannel().sendMessage("Sorry, adding and removing global bans is reserved for the bot owner").queue();
+                return;
+            }
+
+            String adjustedContent = content.replace("global ban", "");
+            //identify user
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            if (mentionedUsers.isEmpty()) {
+                event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
+                return;
+            }
+            //noinspection Duplicates
+            if (mentionedUsers.size() > 1) {
+                String out = "You specified several users. Which one of these did you mean?\n";
+                out += String.join("\n", mentionedUsers.stream()
+                        .map(user -> user.getAsMention() + " id(" + user.getId() + ")" + user.getName())
+                        .collect(Collectors.toSet()));
+                event.getChannel().sendMessage(out).queue();
+                return;
+            }
+            User targetUser = mentionedUsers.iterator().next();
+            String reason = content.split("global ban")[1].trim();
+
+            if (reason.isEmpty()) {
+                event.getChannel().sendMessage("Please provide a reason for the global ban.").queue();
+                return;
+            }
+
+            wrapperSupp.get().findApplyAndMerge(GlobalBan.key(targetUser), ban -> ban.setReason(reason));
+            event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
+                    + " added to global bans with reason " + reason).queue();
+        } else if (content.contains("global unban")) {
+            if (!isBotOwner(event.getAuthor())) {
+                event.getChannel().sendMessage("Sorry, adding and removing global bans is reserved for the bot owner").queue();
+                return;
+            }
+
+            String adjustedContent = content.replace("global unban", "");
+            //identify user
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            if (mentionedUsers.isEmpty()) {
+                event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
+                return;
+            }
+            //noinspection Duplicates
+            if (mentionedUsers.size() > 1) {
+                String out = "You specified several users. Which one of these did you mean?\n";
+                out += String.join("\n", mentionedUsers.stream()
+                        .map(user -> user.getAsMention() + " id(" + user.getId() + ")" + user.getName())
+                        .collect(Collectors.toSet()));
+                event.getChannel().sendMessage(out).queue();
+                return;
+            }
+
+            User targetUser = mentionedUsers.iterator().next();
+            wrapperSupp.get().deleteEntity(GlobalBan.key(targetUser));
+            event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
+                    + " removed from global bans. You will still need "
+                    + " individually unban them from any guilds they were banned in.").queue();
         } else if (content.contains("status") || content.contains("help")) {
             String output = "";
             GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
@@ -484,6 +573,12 @@ public class CommandsListener extends ThreadedListener {
                 output += "Reporting channel not configured.\n";
             }
 
+            if (guildSettings.areGlobalBansEnabled()) {
+                output += "Globale bans are **enabled**.\n";
+            } else {
+                output += "Globale bans are disable.\n";
+            }
+
             StringBuilder admins = new StringBuilder();
             for (long roleId : guildSettings.getAdminRoleIds()) {
                 Role r = guild.getRoleById(roleId);
@@ -515,25 +610,82 @@ public class CommandsListener extends ThreadedListener {
             output += "`set here @role`\n\t\tSet the fake `@here` role.\n";
             output += "`reset memberrole `\n\t\tRemove the member role.\n";
             output += "`set memberrole @role or roleid`\n\t\tSet the member role that every human member will get assigned.\n";
+            output += "`reset reporting #channel`\n\t\tReset the reporting channel\n";
+            output += "`set reporting #channel`\n\t\tSet the reporting channel for suspicious users joining this guild.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
             output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";
+            output += "`enable global bans`\n\t\tEnable global ban list curated by the bot owner.\n";
+            output += "`disable global bans`\n\t\tDisable global ban list curated by the bot owner.\n";
+            output += "`list global bans`\n\t\tList all globally banned users with reasons.";
+            output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).";
+            output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).";
             output += "`status` or `help`\n\t\tShow current config and command help.\n";
             event.getChannel().sendMessage(output).queue();
         }
     }
 
-    public static boolean isAdmin(DatabaseWrapper dbWrapper, Member member) {
-        ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> member.getJDA().asBot().getApplicationInfo().complete());
-        //bot owner?
-        //noinspection SimplifiableIfStatement
-        if (appInfo != null && appInfo.getOwner().getIdLong() == member.getUser().getIdLong()) {
-            return true;
-        }
+    public static boolean isBotOwner(User user) {
+        ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> user.getJDA().asBot().getApplicationInfo().complete());
+        return appInfo != null
+                && appInfo.getOwner().getIdLong() == user.getIdLong();
+    }
 
-        return member.isOwner()
+    public static boolean isAdmin(DatabaseWrapper dbWrapper, Member member) {
+        return isBotOwner(member.getUser())
+                || member.isOwner()
                 || member.hasPermission(Permission.ADMINISTRATOR)
                 || dbWrapper.getOrCreate(GuildSettings.key(member.getGuild())).isAdmin(member);
+    }
+
+
+    //adjusted content = message without the command and other stuff thats definitely not the user name
+    private static Set<User> identifyUser(Message msg, String adjustedContent, ShardManager shardManager) {
+        Guild guild = msg.getGuild();
+        Set<User> mentionedUsers = msg.getMentionedMembers().stream()
+                .map(Member::getUser)
+                .filter(user -> !user.isBot())
+                .collect(Collectors.toSet());
+        if (mentionedUsers.isEmpty()) {
+            for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
+                try {
+                    long userId = Long.parseUnsignedLong(str);
+                    User user = shardManager.getUserById(userId);
+                    if (user != null) {
+                        mentionedUsers.add(user);
+                    } else {
+                        try {
+                            user = shardManager.getShardCache().iterator().next().retrieveUserById(userId)
+                                    .submit().get(30, TimeUnit.SECONDS);
+                            if (user != null) {
+                                mentionedUsers.add(user);
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (mentionedUsers.isEmpty()) {
+            for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
+                String withSpaces = str.replaceAll("_", " ");
+                mentionedUsers.addAll(guild.getMembersByName(str, true).stream()
+                        .map(Member::getUser)
+                        .collect(Collectors.toSet()));
+                mentionedUsers.addAll(guild.getMembersByName(withSpaces, true).stream()
+                        .map(Member::getUser)
+                        .collect(Collectors.toSet()));
+                mentionedUsers.addAll(guild.getMembersByNickname(str, true).stream()
+                        .map(Member::getUser)
+                        .collect(Collectors.toSet()));
+                mentionedUsers.addAll(guild.getMembersByNickname(withSpaces, true).stream()
+                        .map(Member::getUser)
+                        .collect(Collectors.toSet()));
+            }
+        }
+
+        return mentionedUsers;
     }
 }

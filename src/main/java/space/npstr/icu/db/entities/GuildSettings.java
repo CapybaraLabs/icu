@@ -23,6 +23,7 @@ import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Type;
 import space.npstr.sqlsauce.entities.discord.BaseDiscordGuild;
 import space.npstr.sqlsauce.fp.types.EntityKey;
@@ -68,6 +69,10 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Nullable
     @Column(name = "reporting_channel_id", nullable = true)
     private Long reportingChannelId;
+
+    @Column(name = "global_bans_enabled", nullable = false)
+    @ColumnDefault("false")
+    private boolean globalBansEnabled;
 
     //jpa / database wrapper
     GuildSettings() {
@@ -225,5 +230,22 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     public GuildSettings resetReportingChannel() {
         this.reportingChannelId = null;
         return this;
+    }
+
+    public boolean areGlobalBansEnabled() {
+        return globalBansEnabled;
+    }
+
+    public GuildSettings setGlobalBansEnabled(boolean globalBansEnabled) {
+        this.globalBansEnabled = globalBansEnabled;
+        return this;
+    }
+
+    public GuildSettings enableGlobalBans() {
+        return setGlobalBansEnabled(true);
+    }
+
+    public GuildSettings disableGlobalBans() {
+        return setGlobalBansEnabled(false);
     }
 }

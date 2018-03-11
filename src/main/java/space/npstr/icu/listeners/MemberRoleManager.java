@@ -64,7 +64,7 @@ public class MemberRoleManager extends ThreadedListener {
                     }
                 });
             } catch (Exception e) {
-                log.error("Failed to sync member role", e);
+                log.error("Failed to sync member roles", e);
             }
         }, 1, 1, TimeUnit.MINUTES);
     }
