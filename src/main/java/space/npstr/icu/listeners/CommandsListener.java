@@ -572,13 +572,13 @@ public class CommandsListener extends ThreadedListener {
                 }
                 if (userReport.length() > 0) {
                     found.incrementAndGet();
-                    String user = "Member " + member.getAsMention() + " (" + member + ") is banned in:\n";
+                    String user = "Member " + member.getAsMention() + " (" + member.getUser() + ") is banned in:\n";
                     event.getChannel().sendMessage(user + userReport.toString()).queue();
                 }
             });
 
             event.getChannel().sendMessage("Checked " + checked.get() + " members of this guild against ban "
-                    + "lists in " + banLists.size() + " guilds for a total of " + totalBans.get() + "bans, and found "
+                    + "lists in " + banLists.size() + " guilds for a total of " + totalBans.get() + " bans, and found "
                     + found.get() + " matches.").queue();
 
         } else if (content.contains("status") || content.contains("help")) {
