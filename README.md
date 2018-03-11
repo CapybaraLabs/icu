@@ -1,4 +1,4 @@
-<img align="right" src="https://i.imgur.com/yByH4ts.png" height="200" width="200">
+<img align="right" src="https://i.imgur.com/YqyuKXT.png" height="200" width="200">
 
 A super simple Discord bot, originally created to preserve a users roles when they leave the server and rejoin.
 
