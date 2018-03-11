@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,16 +40,18 @@ import java.util.function.Supplier;
 /**
  * Created by napster on 10.03.18.
  * <p>
- * Warns guilds about users being banned in other guilds.
+ * Warns guilds about users being banned in other guilds, or users with a fresh account joining.
  */
-public class BanWarningListener extends ThreadedListener {
+public class SuspiciousUsersWarner extends ThreadedListener {
 
-    private static final Logger log = LoggerFactory.getLogger(BanWarningListener.class);
+    private static final Logger log = LoggerFactory.getLogger(SuspiciousUsersWarner.class);
+
+    private static final int MIN_ACCOUNT_AGE_MINUTES = 30;
 
     private final Supplier<DatabaseWrapper> wrapperSupp;
     private final Supplier<ShardManager> shardManagerSupp;
 
-    public BanWarningListener(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
+    public SuspiciousUsersWarner(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
         this.wrapperSupp = wrapperSupplier;
         this.shardManagerSupp = shardManagerSupplier;
     }
@@ -99,13 +102,21 @@ public class BanWarningListener extends ThreadedListener {
             ban.ifPresent(b -> userBans.put(entry.getKey(), b));
         }
 
+        StringBuilder out = new StringBuilder();
+        if (event.getUser().getCreationTime().isAfter(OffsetDateTime.now().minusMinutes(MIN_ACCOUNT_AGE_MINUTES))) {//report accounts younger than 30 minutes
+            out.append("Account younger than ").append(MIN_ACCOUNT_AGE_MINUTES).append(" minutes").append("\n");
+        }
         if (!userBans.isEmpty()) {
-            StringBuilder out = new StringBuilder("User ").append(event.getUser().getAsMention()).append(" (")
-                    .append(event.getUser().getId()).append(") is banned in ").append(userBans.size()).append(" guilds:\n");
+            out.append("Banned in ").append(userBans.size()).append(" guilds:\n```\n");
             for (Map.Entry<Guild, Guild.Ban> ban : userBans.entrySet()) {
-                out.append(ban.getKey().getName()).append(": ").append(ban.getValue().getReason()).append("\n");
+                out.append(ban.getKey().getName()).append(" with reason: ").append(ban.getValue().getReason()).append("\n");
             }
-            reportingChannel.sendMessage(out.toString()).queue();
+            out.append("\n```");
+        }
+
+        if (out.length() > 0) {
+            String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
+            reportingChannel.sendMessage(user + out.toString()).queue();
         }
     }
 }
