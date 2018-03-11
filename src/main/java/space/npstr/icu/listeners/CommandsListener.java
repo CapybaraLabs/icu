@@ -28,6 +28,7 @@ import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.core.requests.RequestFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
@@ -37,10 +38,14 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -531,6 +536,51 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
                     + " removed from global bans. You will still need "
                     + " individually unban them from any guilds they were banned in.").queue();
+        } else if (content.contains("nsa report")) {
+            event.getChannel().sendMessage("This may take a while if there are many matches.").queue();
+            //populate ban lists of all available servers
+            Map<Guild, RequestFuture<List<Guild.Ban>>> futures = new HashMap<>();
+            shardManagerSupp.get().getGuildCache().forEach(g -> {
+                if (g.isAvailable() && g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                    futures.put(g, g.getBanList().submit());
+                }
+            });
+
+            AtomicInteger totalBans = new AtomicInteger(0);
+            Map<Guild, List<Guild.Ban>> banLists = new HashMap<>();
+            for (Map.Entry<Guild, RequestFuture<List<Guild.Ban>>> entry : futures.entrySet()) {
+                List<Guild.Ban> bans = new ArrayList<>();
+                try {
+                    bans.addAll(entry.getValue().get(30, TimeUnit.SECONDS));
+                    totalBans.addAndGet(bans.size());
+                } catch (Exception e) {
+                    log.error("Failed to fetch ban list for guild {}", entry.getKey(), e);
+                }
+                banLists.put(entry.getKey(), bans);
+            }
+
+            AtomicInteger found = new AtomicInteger(0);
+            AtomicInteger checked = new AtomicInteger(0);
+            guild.getMemberCache().forEach(member -> {
+                checked.incrementAndGet();
+                StringBuilder userReport = new StringBuilder();
+                for (Map.Entry<Guild, List<Guild.Ban>> banList : banLists.entrySet()) {
+                    Optional<Guild.Ban> ban = banList.getValue().stream()
+                            .filter(b -> b.getUser().equals(member.getUser()))
+                            .findAny();
+                    ban.ifPresent(b -> userReport.append(banList.getKey().getName()).append(" with reason: ").append(b.getReason()).append("\n"));
+                }
+                if (userReport.length() > 0) {
+                    found.incrementAndGet();
+                    String user = "Member " + member.getAsMention() + " (" + member + ") is banned in:\n";
+                    event.getChannel().sendMessage(user + userReport.toString()).queue();
+                }
+            });
+
+            event.getChannel().sendMessage("Checked " + checked.get() + " members of this guild against ban "
+                    + "lists in " + banLists.size() + " guilds for a total of " + totalBans.get() + "bans, and found "
+                    + found.get() + " matches.").queue();
+
         } else if (content.contains("status") || content.contains("help")) {
             String output = "";
             GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
@@ -621,6 +671,7 @@ public class CommandsListener extends ThreadedListener {
             output += "`list global bans`\n\t\tList all globally banned users with reasons.\n";
             output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).\n";
             output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
+            output += "`nsa report`\n\t\tChecks all members of this guild for bans in other guilds.\n";
             output += "`status` or `help`\n\t\tShow current config and command help.\n";
             event.getChannel().sendMessage(output).queue();
         }
