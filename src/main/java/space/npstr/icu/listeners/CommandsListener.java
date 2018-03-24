@@ -624,9 +624,9 @@ public class CommandsListener extends ThreadedListener {
             }
 
             if (guildSettings.areGlobalBansEnabled()) {
-                output += "Globale bans are **enabled**.\n";
+                output += "Global bans are **enabled**.\n";
             } else {
-                output += "Globale bans are disabled.\n";
+                output += "Global bans are disabled.\n";
             }
 
             StringBuilder admins = new StringBuilder();

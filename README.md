@@ -9,10 +9,10 @@ It is currently in heavy use, loved and hated, on several big (read: a few thous
 
 ##### Features:
 - Readding roles to a user when they leave and rejoin a server
-- Adding fake @everyone and @here roles to users trying to abuse these mentions, resulting in lessons learned about Discord etiquette 
+- Adding fake @everyone and @here roles to users trying to abuse these mentions, resulting in lessons learned about Discord etiquette
 - Having a member role assigned to every human user of a guild
-- Can warn you if a user joins the server who is banned on another icu server
-- Tired of trolls hitting several of your servers? Enforce global bans. 
+- Can warn you if a user joins the server who is banned on another icu server, or an existing member of your server is banned on another server that icu is member of
+- Tired of trolls hitting several of your servers? Enforce global bans between all your servers.
 
 
 

@@ -21,6 +21,7 @@ import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.events.guild.GuildBanEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.requests.RequestFuture;
 import org.slf4j.Logger;
@@ -61,25 +62,50 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         getExecutor(event.getGuild()).execute(() -> memberJoined(event));
     }
 
-    private void memberJoined(GuildMemberJoinEvent event) {
-        Long reportingChannelId = wrapperSupp.get().getOrCreate(GuildSettings.key(event.getGuild())).getReportingChannelId();
-        if (reportingChannelId == null) {
-            return;
-        }
-        TextChannel reportingChannel = event.getGuild().getTextChannelById(reportingChannelId);
-        if (reportingChannel == null || !reportingChannel.canTalk()) {
-            for (TextChannel textChannel : event.getGuild().getTextChannels()) {
-                if (textChannel.canTalk()) {
-                    textChannel.sendMessage("A reporting channel <#" + reportingChannelId + "> was configured, "
-                            + "but it appears to be deleted or I can't write there. Please tell an admin of this guild "
-                            + "to either fix permissions, set a new channel, or reset my reporting channel configuration.").queue();
-                    return;
-                }
+    @Override
+    public void onGuildBan(GuildBanEvent event) {
+        getExecutor(event.getGuild()).execute(() -> memberBanned(event));
+    }
+
+    private void memberBanned(GuildBanEvent event) {
+        Optional<String> r = Optional.empty();
+        if (event.getGuild().isAvailable() && event.getGuild().getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+            try {
+                r = event.getGuild().getBanList().submit().get(30, TimeUnit.SECONDS)
+                        .stream()
+                        .filter(ban -> ban.getUser().getIdLong() == event.getUser().getIdLong())
+                        .findAny()
+                        .map(Guild.Ban::getReason);
+            } catch (Exception e) {
+                log.error("Ugh", e);
             }
-            // meh...cant report the issue, raising an warn/error level log is kinda ok since this is selfhosted
-            log.warn("Guild {} has a broken reporting channel", event.getGuild());
+        }
+        final String reason = r.orElse("Reason could not be retrieved");
+        //check whether the banned user is part of other guilds, and notify them
+        event.getUser().getMutualGuilds().forEach(guild -> {
+            //dont notify guild where this user was just banned
+            if (guild.getIdLong() == event.getGuild().getIdLong()) {
+                return;
+            }
+
+            Optional<TextChannel> textChannel = fetchWorkingReportingChannel(guild);
+            if (!textChannel.isPresent()) {
+                return;
+            }
+            TextChannel reportingChannel = textChannel.get();
+            String messsage = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
+            messsage += "Banned in " + guild.getName() + " with reason: " + reason;
+
+            reportingChannel.sendMessage(messsage).queue();
+        });
+    }
+
+    private void memberJoined(GuildMemberJoinEvent event) {
+        Optional<TextChannel> textChannel = fetchWorkingReportingChannel(event.getGuild());
+        if (!textChannel.isPresent()) {
             return;
         }
+        TextChannel reportingChannel = textChannel.get();
 
         Map<Guild, RequestFuture<List<Guild.Ban>>> banLists = new HashMap<>();
         shardManagerSupp.get().getGuildCache().forEach(guild -> {
@@ -118,5 +144,30 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
             reportingChannel.sendMessage(user + out.toString()).queue();
         }
+    }
+
+    //returns the reporting channe lwhere we can post in of the guild
+    // and takes appropriate measures if it failed to do so
+    private Optional<TextChannel> fetchWorkingReportingChannel(Guild guild) {
+        Long reportingChannelId = wrapperSupp.get().getOrCreate(GuildSettings.key(guild)).getReportingChannelId();
+        if (reportingChannelId == null) {
+            return Optional.empty();
+        }
+        TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
+        if (reportingChannel == null || !reportingChannel.canTalk()) {
+            for (TextChannel textChannel : guild.getTextChannels()) {
+                if (textChannel.canTalk()) {
+                    textChannel.sendMessage("A reporting channel <#" + reportingChannelId + "> was configured, "
+                            + "but it appears to be deleted or I can't write there. Please tell an admin of this guild "
+                            + "to either fix permissions, set a new channel, or reset my reporting channel configuration.").queue();
+                    return Optional.empty();
+                }
+            }
+            // meh...cant report the issue, raising an warn/error level log is kinda ok since this is selfhosted
+            log.warn("Guild {} has a broken reporting channel", guild);
+            return Optional.empty();
+        }
+
+        return Optional.of(reportingChannel);
     }
 }
