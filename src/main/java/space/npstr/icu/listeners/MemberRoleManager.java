@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
+import java.time.OffsetDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -104,6 +105,15 @@ public class MemberRoleManager extends ThreadedListener {
                         || member.getRoles().contains(memberRole)) { //only members missing the role get it
                     return;
                 }
+
+                if (guild.getVerificationLevel().getKey() >= Guild.VerificationLevel.HIGH.getKey()) {
+                    //only assign to users that are at least 10 minutes in the guild, otherwise it circumvents
+                    //the message sending restrictions of the HIGH verification level (users with a role can send messages)
+                    if (member.getJoinDate().isAfter(OffsetDateTime.now().minusMinutes(10))) {
+                        return;
+                    }
+                }
+
                 guild.getController().addSingleRoleToMember(member, memberRole).queue();
             } catch (Exception e) {
                 log.error("Could not assign member role to user {}", member, e);
