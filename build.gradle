@@ -6,12 +6,12 @@ plugins {
     id 'application'
     id 'idea'
     id 'com.gorylenko.gradle-git-properties' version '1.4.21'
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.github.johnrengelman.shadow' version '2.0.3'
 }
 
 
 group 'space.npstr.icu'
-version '0.0.5-SNAPSHOT'
+version '0.0.6-SNAPSHOT'
 ext {
     moduleName = 'icu'
 }
@@ -32,13 +32,13 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.5.1_353'
+    ext.jdaVersion              = '3.6.0_354'
     ext.logbackVersion          = '1.2.3'
     ext.sentryVersion           = '1.7.2'
     ext.okhttpVersion           = '3.10.0'
     ext.yamlVersion             = '1.20'
-    ext.sqlsauceVersion         = '0.0.13'
-    ext.hibernateVersion        = '5.2.14.Final'
+    ext.sqlsauceVersion         = '0.0.14'
+    ext.hibernateVersion        = '5.2.16.Final'
     ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'
     ext.caffeineVersion         = '2.6.2'
