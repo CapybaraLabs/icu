@@ -69,9 +69,10 @@ public class SuspiciousUsersWarner extends ThreadedListener {
 
     private void memberBanned(GuildBanEvent event) {
         Optional<String> r = Optional.empty();
-        if (event.getGuild().isAvailable() && event.getGuild().getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+        Guild bannedGuild = event.getGuild();
+        if (bannedGuild.isAvailable() && bannedGuild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             try {
-                r = event.getGuild().getBanList().submit().get(30, TimeUnit.SECONDS)
+                r = bannedGuild.getBanList().submit().get(30, TimeUnit.SECONDS)
                         .stream()
                         .filter(ban -> ban.getUser().getIdLong() == event.getUser().getIdLong())
                         .findAny()
@@ -84,7 +85,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         //check whether the banned user is part of other guilds, and notify them
         event.getUser().getMutualGuilds().forEach(guild -> {
             //dont notify guild where this user was just banned
-            if (guild.getIdLong() == event.getGuild().getIdLong()) {
+            if (guild.getIdLong() == bannedGuild.getIdLong()) {
                 return;
             }
 
@@ -94,7 +95,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             }
             TextChannel reportingChannel = textChannel.get();
             String messsage = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
-            messsage += "Banned in " + guild.getName() + " with reason: " + reason;
+            messsage += "Banned in " + bannedGuild.getName() + " with reason: " + reason;
 
             reportingChannel.sendMessage(messsage).queue();
         });
