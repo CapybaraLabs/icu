@@ -61,7 +61,8 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.6'
-    distributionType = DistributionType.ALL
+    //noinspection UnnecessaryQualifiedReference
+    distributionType = Wrapper.DistributionType.ALL
 }
 
 compileJava.dependsOn 'clean'
