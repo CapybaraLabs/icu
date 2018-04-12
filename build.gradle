@@ -1,5 +1,4 @@
 import org.apache.tools.ant.filters.ReplaceTokens
-import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
 
 plugins {
     id 'java'
@@ -11,7 +10,7 @@ plugins {
 
 
 group 'space.npstr.icu'
-version '0.0.6-SNAPSHOT'
+version '0.0.7-SNAPSHOT'
 ext {
     moduleName = 'icu'
 }

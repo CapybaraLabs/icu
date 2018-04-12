@@ -29,6 +29,7 @@ import space.npstr.sqlsauce.entities.SaucedEntity;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 
 import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
@@ -58,6 +59,10 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     @Type(type = "array-list-long")
     @Column(name = "role_ids", columnDefinition = "bigint[]")
     private ArrayList<Long> roleIds = new ArrayList<>();
+
+    @Nullable
+    @Column(name = "nickname", columnDefinition = "text", nullable = true)
+    private String nickname;
 
     //for jpa / database wrapper
     MemberRoles() {
@@ -155,8 +160,20 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
                 .map(ISnowflake::getIdLong).collect(Collectors.toSet()));
     }
 
+    @Nullable
+    public String getNickname() {
+        return nickname;
+    }
+
+    @CheckReturnValue
+    public MemberRoles setNickname(@Nullable String nickname) {
+        this.nickname = nickname;
+        return this;
+    }
+
     @CheckReturnValue
     public MemberRoles set(Member member) {
-        return setRoles(member.getRoles());
+        return setRoles(member.getRoles())
+                .setNickname(member.getNickname());
     }
 }

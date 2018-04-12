@@ -17,12 +17,14 @@
 
 package space.npstr.icu.listeners;
 
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
+import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
 import org.slf4j.Logger;
@@ -59,7 +61,15 @@ public class RoleChangesListener extends ThreadedListener {
             for (Role role : event.getRoles()) {
                 log.debug("Role {} added to user {}", role, event.getMember());
             }
-            updateRoles(event.getMember());
+            updateMember(event.getMember());
+        });
+    }
+
+    @Override
+    public void onGuildMemberNickChange(GuildMemberNickChangeEvent event) {
+        getExecutor(event.getGuild()).execute(() -> {
+            log.debug("Nickname set from {} to {} for user {}", event.getPrevNick(), event.getNewNick(), event.getMember());
+            updateMember(event.getMember());
         });
     }
 
@@ -69,7 +79,7 @@ public class RoleChangesListener extends ThreadedListener {
             for (Role role : event.getRoles()) {
                 log.debug("Role {} removed from user {}", role, event.getMember());
             }
-            updateRoles(event.getMember());
+            updateMember(event.getMember());
         });
     }
 
@@ -80,12 +90,12 @@ public class RoleChangesListener extends ThreadedListener {
             Collection<Role> roles = event.getMember().getRoles();
             log.debug("User {} left guild {}, with roles: {}", event.getMember(), event.getGuild(), roles.isEmpty() ? "no roles" :
                     String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
-            updateRoles(event.getMember());
+            updateMember(event.getMember());
         });
     }
 
 
-    private void updateRoles(Member member) {
+    private void updateMember(Member member) {
         wrapperSupp.get().findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
     }
 
@@ -95,10 +105,24 @@ public class RoleChangesListener extends ThreadedListener {
             EntityKey<MemberComposite, MemberRoles> key = EntityKey.of(new MemberComposite(event.getMember()), MemberRoles.class);
             MemberRoles memberRoles = wrapperSupp.get().getOrCreate(key);
             Collection<Role> roles = memberRoles.getRoles(__ -> event.getGuild());
-            log.debug("User {} joined guild {}, restoring roles: {}", event.getMember(), event.getGuild(), roles.isEmpty() ? "no roles" :
-                    String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
+            String storedNick = memberRoles.getNickname();
+            log.debug("User {} joined guild {}, restoring nickname {} and roles: {}",
+                    event.getMember(), event.getGuild(), storedNick,
+                    roles.isEmpty()
+                            ? "no roles"
+                            : String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
 
             Member self = event.getGuild().getSelfMember();
+            if (storedNick != null && !storedNick.isEmpty()
+                    && self.hasPermission(Permission.NICKNAME_MANAGE)
+                    && self.canInteract(event.getMember())) {
+                try {
+                    event.getGuild().getController().setNickname(event.getMember(), storedNick).queue();
+                } catch (Exception e) {
+                    log.error("Failed to set nickname {} for user {}", storedNick, event.getMember());
+                }
+            }
+
             roles = roles.stream().filter(
                     role -> {
                         if (role.isManaged()) {
