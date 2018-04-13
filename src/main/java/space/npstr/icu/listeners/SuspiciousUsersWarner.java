@@ -19,8 +19,11 @@ package space.npstr.icu.listeners;
 
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.audit.ActionType;
+import net.dv8tion.jda.core.audit.AuditLogEntry;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.guild.GuildBanEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.requests.RequestFuture;
@@ -70,20 +73,38 @@ public class SuspiciousUsersWarner extends ThreadedListener {
     private void memberBanned(GuildBanEvent event) {
         Optional<String> r = Optional.empty();
         Guild bannedGuild = event.getGuild();
-        if (bannedGuild.isAvailable() && bannedGuild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-            try {
-                r = bannedGuild.getBanList().submit().get(30, TimeUnit.SECONDS)
-                        .stream()
-                        .filter(ban -> ban.getUser().getIdLong() == event.getUser().getIdLong())
-                        .findAny()
-                        .map(Guild.Ban::getReason);
-            } catch (Exception e) {
-                log.error("Ugh", e);
+        User bannedUser = event.getUser();
+        if (bannedGuild.isAvailable()) {
+            if (bannedGuild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                try {
+                    r = bannedGuild.getBanList().submit().get(30, TimeUnit.SECONDS)
+                            .stream()
+                            .filter(ban -> ban.getUser().getIdLong() == bannedUser.getIdLong())
+                            .findAny()
+                            .map(Guild.Ban::getReason);
+                } catch (Exception e) {
+                    log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
+                            bannedUser, bannedGuild, e);
+                }
+            }
+
+            if (!r.isPresent() && bannedGuild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
+                try {
+                    r = bannedGuild.getAuditLogs().type(ActionType.BAN).submit().get(30, TimeUnit.SECONDS)
+                            .stream()
+                            .filter(entry -> entry.getType() == ActionType.BAN)
+                            .filter(entry -> entry.getTargetIdLong() == bannedUser.getIdLong())
+                            .findFirst()
+                            .map(AuditLogEntry::getReason);
+                } catch (Exception e) {
+                    log.error("Failed to get ban reason for banned user {} of guild {} through the audit logs",
+                            bannedUser, bannedGuild, e);
+                }
             }
         }
         final String reason = r.orElse("Reason could not be retrieved");
         //check whether the banned user is part of other guilds, and notify them
-        event.getUser().getMutualGuilds().forEach(guild -> {
+        bannedUser.getMutualGuilds().forEach(guild -> {
             //dont notify guild where this user was just banned
             if (guild.getIdLong() == bannedGuild.getIdLong()) {
                 return;
@@ -94,7 +115,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
                 return;
             }
             TextChannel reportingChannel = textChannel.get();
-            String messsage = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
+            String messsage = "User " + bannedUser.getAsMention() + " (" + bannedUser + "):\n";
             messsage += "Banned in " + bannedGuild.getName() + " with reason: " + reason;
 
             reportingChannel.sendMessage(messsage).queue();
