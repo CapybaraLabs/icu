@@ -83,6 +83,17 @@ public class DbManager {
                     .setHibernateProperty("net.sf.ehcache.configurationResourceName", "/ehcache.xml")
                     .setHibernateProperty("hibernate.cache.provider_configuration_file_resource_path", "ehcache.xml")
                     .setHibernateProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.ehcache.EhCacheRegionFactory")
+
+                    //hide some exception spam on start, as postgres does not support CLOBs
+                    // https://stackoverflow.com/questions/43905119/postgres-error-method-org-postgresql-jdbc-pgconnection-createclob-is-not-imple
+                    .setHibernateProperty("hibernate.jdbc.lob.non_contextual_creation", "true")
+
+                    // these may improve performance on slow machines / big databases
+                    // see https://stackoverflow.com/questions/10075081/hibernate-slow-to-acquire-postgres-connection
+                    // and https://stackoverflow.com/questions/14445838/hibernate-startup-very-slow
+                    .setHibernateProperty("hibernate.jdbc.use_get_generated_keys", "true")
+                    .setHibernateProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
+                    .setHibernateProperty("hibernate.temp.use_jdbc_metadata_defaults", "false")
                     .build();
         } catch (Exception e) {
             String message = "Failed to set up database";
