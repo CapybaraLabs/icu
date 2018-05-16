@@ -688,6 +688,8 @@ public class CommandsListener extends ThreadedListener {
             output += "`set memberrole @role or roleid`\n\t\tSet the member role that every human member will get assigned.\n";
             output += "`reset reporting #channel`\n\t\tReset the reporting channel\n";
             output += "`set reporting #channel`\n\t\tSet the reporting channel for suspicious users joining this guild.\n";
+            output += "`reset log #channel`\n\t\tReset the log channel\n";
+            output += "`set log #channel`\n\t\tSet the log channel for bans, unbans and kicks.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
             output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
