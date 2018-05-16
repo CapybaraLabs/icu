@@ -74,6 +74,10 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @ColumnDefault("false")
     private boolean globalBansEnabled;
 
+    @Nullable
+    @Column(name = "log_channel_id", nullable = true)
+    private Long logChannelId;
+
     //jpa / database wrapper
     GuildSettings() {
     }
@@ -247,5 +251,21 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
     public GuildSettings disableGlobalBans() {
         return setGlobalBansEnabled(false);
+    }
+
+
+    @Nullable
+    public Long getLogChannelId() {
+        return logChannelId;
+    }
+
+    public GuildSettings setLogChannel(TextChannel logChannel) {
+        this.logChannelId = logChannel.getIdLong();
+        return this;
+    }
+
+    public GuildSettings resetLogChannel() {
+        this.logChannelId = null;
+        return this;
     }
 }

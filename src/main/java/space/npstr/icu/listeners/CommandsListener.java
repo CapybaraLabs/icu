@@ -205,6 +205,20 @@ public class CommandsListener extends ThreadedListener {
 
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setReportingChannel(reportingChannel));
             event.getChannel().sendMessage("Set up " + reportingChannel.getAsMention() + " as the reporting channel 🚔").queue();
+        } else if (content.contains("reset log")) {
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetLogChannel);
+            event.getChannel().sendMessage("Reset the log channel").queue();
+        } else if (content.contains("set log")) {
+
+            TextChannel logChannel = msg.getMentionedChannels().stream().findFirst().orElse(msg.getTextChannel());
+
+            if (!logChannel.canTalk()) {
+                event.getChannel().sendMessage("I can't talk in " + logChannel.getAsMention()).queue();
+                return;
+            }
+
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setLogChannel(logChannel));
+            event.getChannel().sendMessage("Set up " + logChannel.getAsMention() + " as the log channel 🚔").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
             List<Member> membersToAdd = msg.getMentionedMembers().stream()
@@ -621,6 +635,18 @@ public class CommandsListener extends ThreadedListener {
                 }
             } else {
                 output += "Reporting channel not configured.\n";
+            }
+
+            Long logChannelId = guildSettings.getLogChannelId();
+            if (logChannelId != null) {
+                TextChannel logChannel = guild.getTextChannelById(logChannelId);
+                if (logChannel != null) {
+                    output += "Log channel is " + logChannel.getAsMention() + ".\n";
+                } else {
+                    output += "Log channel has been configured with id " + logChannelId + ", but it does not exist.\n";
+                }
+            } else {
+                output += "Log channel not configured.\n";
             }
 
             if (guildSettings.areGlobalBansEnabled()) {

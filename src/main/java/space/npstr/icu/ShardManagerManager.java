@@ -22,6 +22,7 @@ import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.entities.Game;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.listeners.BanLogs;
 import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
 import space.npstr.icu.listeners.MemberRoleManager;
@@ -35,6 +36,8 @@ import java.util.function.Supplier;
 
 /**
  * Created by napster on 13.02.18.
+ *
+ * This class's name is totally not a meme.
  */
 @ThreadSafe
 public class ShardManagerManager {
@@ -82,6 +85,7 @@ public class ShardManagerManager {
                 .addEventListeners(new EveryoneHereListener(wrapperSupplier))
                 .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new SuspiciousUsersWarner(wrapperSupplier, shardManagerSupplier))
+                .addEventListeners(new BanLogs(wrapperSupplier))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {

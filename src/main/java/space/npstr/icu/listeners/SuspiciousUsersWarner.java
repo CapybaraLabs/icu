@@ -19,8 +19,6 @@ package space.npstr.icu.listeners;
 
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.audit.ActionType;
-import net.dv8tion.jda.core.audit.AuditLogEntry;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -29,9 +27,11 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.core.requests.RequestFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.AuditLogUtil;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
+import javax.annotation.CheckReturnValue;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,42 +67,15 @@ public class SuspiciousUsersWarner extends ThreadedListener {
 
     @Override
     public void onGuildBan(GuildBanEvent event) {
-        getExecutor(event.getGuild()).execute(() -> memberBanned(event));
+        OffsetDateTime now = OffsetDateTime.now();
+        getExecutor(event.getGuild()).execute(() -> memberBanned(event, now));
     }
 
-    private void memberBanned(GuildBanEvent event) {
-        Optional<String> r = Optional.empty();
+    private void memberBanned(GuildBanEvent event, OffsetDateTime eventTime) {
         Guild bannedGuild = event.getGuild();
         User bannedUser = event.getUser();
-        if (bannedGuild.isAvailable()) {
-            if (bannedGuild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-                try {
-                    r = bannedGuild.getBanList().submit().get(30, TimeUnit.SECONDS)
-                            .stream()
-                            .filter(ban -> ban.getUser().getIdLong() == bannedUser.getIdLong())
-                            .findAny()
-                            .map(Guild.Ban::getReason);
-                } catch (Exception e) {
-                    log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
-                            bannedUser, bannedGuild, e);
-                }
-            }
-
-            if (!r.isPresent() && bannedGuild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
-                try {
-                    r = bannedGuild.getAuditLogs().type(ActionType.BAN).submit().get(30, TimeUnit.SECONDS)
-                            .stream()
-                            .filter(entry -> entry.getType() == ActionType.BAN)
-                            .filter(entry -> entry.getTargetIdLong() == bannedUser.getIdLong())
-                            .findFirst()
-                            .map(AuditLogEntry::getReason);
-                } catch (Exception e) {
-                    log.error("Failed to get ban reason for banned user {} of guild {} through the audit logs",
-                            bannedUser, bannedGuild, e);
-                }
-            }
-        }
-        final String reason = r.orElse("Reason could not be retrieved");
+        final String reason = AuditLogUtil.getBanReason(bannedGuild, bannedUser, eventTime)
+                .orElse("Reason could not be retrieved");
         //check whether the banned user is part of other guilds, and notify them
         bannedUser.getMutualGuilds().forEach(guild -> {
             //dont notify guild where this user was just banned
@@ -170,6 +143,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
 
     //returns the reporting channe lwhere we can post in of the guild
     // and takes appropriate measures if it failed to do so
+    @CheckReturnValue
     private Optional<TextChannel> fetchWorkingReportingChannel(Guild guild) {
         Long reportingChannelId = wrapperSupp.get().getOrCreate(GuildSettings.key(guild)).getReportingChannelId();
         if (reportingChannelId == null) {
