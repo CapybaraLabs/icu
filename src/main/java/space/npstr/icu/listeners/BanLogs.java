@@ -98,12 +98,11 @@ public class BanLogs extends ThreadedListener {
         Guild guild = event.getGuild();
         User user = event.getUser();
         fetchWorkingLogChannel(guild).ifPresent(
-                logChannel -> {
-                    String reason = AuditLogUtil.getKickEntry(guild, user, eventTime)
-                            .map(entry -> String.format("By <@%s> (%s) for: %s", entry.getUser().getIdLong(), entry.getUser(), entry.getReason()))
-                            .orElse("Failed to fetch audit log entry.");
-                    logChannel.sendMessage(String.format(KICK_FORMAT, user.getIdLong(), user, reason)).queue();
-                }
+                logChannel -> AuditLogUtil.getKickEntry(guild, user, eventTime)
+                        .map(entry -> String.format("By %s for: %s", entry.getUser(), entry.getReason()))
+                        .ifPresent(reason -> logChannel
+                                .sendMessage(String.format(KICK_FORMAT, user.getIdLong(), user, reason))
+                                .queue())
         );
     }
 
