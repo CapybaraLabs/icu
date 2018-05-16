@@ -37,7 +37,7 @@ dependencies {
     ext.okhttpVersion           = '3.10.0'
     ext.yamlVersion             = '1.21'
     ext.sqlsauceVersion         = '0.2.3'
-    ext.hibernateVersion        = '5.3.0.Final'
+    ext.hibernateVersion        = '5.2.17.Final'
     ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'
     ext.caffeineVersion         = '2.6.2'
