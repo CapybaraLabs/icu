@@ -53,6 +53,8 @@ public class Config {
     public final String discordToken;
     public final String jdbcUrl;
     public final String sentryDsn;
+    public final boolean nahEnhancement;
+    public final long nahReactionEmoteId;
 
     public Config() throws IOException {
 
@@ -78,6 +80,9 @@ public class Config {
             if (this.sentryDsn != null && !this.sentryDsn.isEmpty()) {
                 Sentry.init(this.sentryDsn).setRelease(GitRepoState.getGitRepositoryState().commitId);
             }
+
+            this.nahEnhancement = (boolean) sneaky.getOrDefault("nahEnhancement", false);
+            this.nahReactionEmoteId = (long) sneaky.getOrDefault("nahReactionEmoteId", 0L);
         }
     }
 }

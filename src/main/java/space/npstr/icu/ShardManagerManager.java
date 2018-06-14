@@ -26,6 +26,7 @@ import space.npstr.icu.listeners.BanLogs;
 import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
 import space.npstr.icu.listeners.MemberRoleManager;
+import space.npstr.icu.listeners.NahCrossFunctionality;
 import space.npstr.icu.listeners.RoleChangesListener;
 import space.npstr.icu.listeners.SuspiciousUsersWarner;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -86,6 +87,7 @@ public class ShardManagerManager {
                 .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new SuspiciousUsersWarner(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new BanLogs(wrapperSupplier))
+                .addEventListeners(new NahCrossFunctionality())
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {
