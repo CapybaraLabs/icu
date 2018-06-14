@@ -31,9 +31,9 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.6.0_366'
+    ext.jdaVersion              = '3.6.0_375'
     ext.logbackVersion          = '1.2.3'
-    ext.sentryVersion           = '1.7.4'
+    ext.sentryVersion           = '1.7.5'
     ext.okhttpVersion           = '3.10.0'
     ext.yamlVersion             = '1.21'
     ext.sqlsauceVersion         = '0.2.3'
