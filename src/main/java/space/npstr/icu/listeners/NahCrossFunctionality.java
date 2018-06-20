@@ -39,7 +39,7 @@ public class NahCrossFunctionality extends ListenerAdapter {
 
     private static final String[] REACTION_TRIGGER_CONTENT = {
             "Advertisement is not allowed in this Server!",
-            "has been banned for Advertisement!",
+            "has been kicked for Advertisement!",
             "has been banned for Advertisement!",
     };
 
