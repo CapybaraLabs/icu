@@ -54,7 +54,9 @@ public class Config {
     public final String jdbcUrl;
     public final String sentryDsn;
     public final boolean nahEnhancement;
-    public final long nahReactionEmoteId;
+    public final long nahReactionEmoteIdDeleted;
+    public final long nahReactionEmoteIdKicked;
+    public final long nahReactionEmoteIdBanned;
 
     public Config() throws IOException {
 
@@ -82,7 +84,9 @@ public class Config {
             }
 
             this.nahEnhancement = (boolean) sneaky.getOrDefault("nahEnhancement", false);
-            this.nahReactionEmoteId = (long) sneaky.getOrDefault("nahReactionEmoteId", 0L);
+            this.nahReactionEmoteIdDeleted = (long) sneaky.getOrDefault("nahReactionEmoteIdDeleted", 0L);
+            this.nahReactionEmoteIdKicked = (long) sneaky.getOrDefault("nahReactionEmoteIdKicked", 0L);
+            this.nahReactionEmoteIdBanned = (long) sneaky.getOrDefault("nahReactionEmoteIdBanned", 0L);
         }
     }
 }

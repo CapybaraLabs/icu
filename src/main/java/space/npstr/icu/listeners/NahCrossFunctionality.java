@@ -37,9 +37,15 @@ public class NahCrossFunctionality extends ListenerAdapter {
 
     private static final long NAH_BOT_ID = 316009507446718465L; //NoAdsHere. Hardcoded cause there is only one such official bot for now.
 
-    private static final String[] REACTION_TRIGGER_CONTENT = {
+    private static final String[] REACTION_TRIGGER_CONTENT_DELETED = {
             "Advertisement is not allowed in this Server!",
+    };
+
+    private static final String[] REACTION_TRIGGER_CONTENT_KICKED = {
             "has been kicked for Advertisement!",
+    };
+
+    private static final String[] REACTION_TRIGGER_CONTENT_BANNED = {
             "has been banned for Advertisement!",
     };
 
@@ -52,12 +58,23 @@ public class NahCrossFunctionality extends ListenerAdapter {
             return;
         }
 
-        if (Arrays.stream(REACTION_TRIGGER_CONTENT)
-                .noneMatch(trigger -> event.getMessage().getContentRaw().contains(trigger))) {
+        long emoteId = 0L;
+
+        if (Arrays.stream(REACTION_TRIGGER_CONTENT_DELETED)
+                .anyMatch(trigger -> event.getMessage().getContentRaw().contains(trigger))) {
+            emoteId = Config.C.nahReactionEmoteIdDeleted;
+        } else if (Arrays.stream(REACTION_TRIGGER_CONTENT_KICKED)
+                .anyMatch(trigger -> event.getMessage().getContentRaw().contains(trigger))) {
+            emoteId = Config.C.nahReactionEmoteIdKicked;
+        } else if (Arrays.stream(REACTION_TRIGGER_CONTENT_BANNED)
+                .anyMatch(trigger -> event.getMessage().getContentRaw().contains(trigger))) {
+            emoteId = Config.C.nahReactionEmoteIdBanned;
+        }
+
+        if (emoteId <= 0L) {
             return;
         }
 
-        final long emoteId = Config.C.nahReactionEmoteId;
         final Emote reactionEmote = event.getJDA().getEmoteById(emoteId);
         if (reactionEmote == null) {
             log.warn("Failed to look up nah reaction emote by id " + emoteId);
