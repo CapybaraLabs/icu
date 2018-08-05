@@ -144,7 +144,13 @@ public class RoleChangesListener extends ThreadedListener {
                     }
             ).collect(Collectors.toSet());
 
-            event.getGuild().getController().addRolesToMember(event.getMember(), roles).queue();
+            // we space out adding roles like this, because bulk changes lead to race conditions with other bots who
+            // apply roles on join (think dyno's managed mute role). the average user, especially any malicious one,
+            // probably wont have many roles, so we can accept the higher ratelimit exhaustion as a trade off for safety
+            // of a race condition
+            roles.forEach(role ->
+                    event.getGuild().getController().addSingleRoleToMember(event.getMember(), role).queue()
+            );
         });
     }
 
