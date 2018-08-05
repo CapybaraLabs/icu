@@ -115,7 +115,7 @@ public class GlobalBanSync {
 
         List<RequestFuture> futures = new ArrayList<>();
         for (GlobalBan ban : toBan) {
-            String reason = "[Global Ban List] " + ban.getReason();
+            String reason = "[i.c.u. Global Ban List] " + ban.getReason();
             if (reason.length() >= 512) { //max audit log size
                 reason = reason.substring(0, 512);
             }
