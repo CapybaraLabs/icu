@@ -717,10 +717,22 @@ public class CommandsListener extends ThreadedListener {
                 output += "Log channel not configured.\n";
             }
 
-            if (guildSettings.areGlobalBansEnabled()) {
-                output += "Global bans are **enabled**.\n";
+            StringBuilder ignoredRolesStr = new StringBuilder();
+            for (long ignoredRoleId : guildSettings.getIgnoredRoleIds()) {
+                Role ignoredRole = guild.getRoleById(ignoredRoleId);
+                ignoredRolesStr.append("Role ").append(ignoredRoleId).append("\t").append(ignoredRole != null ? ignoredRole.getName() : "unknown (deleted ?)").append("\n");
+            }
+            output += "\n\nRoles that are ignored and will not be restored upon users rejoining:\n";
+            if (ignoredRolesStr.length() == 0) {
+                output += "No ignored roles.";
             } else {
-                output += "Global bans are disabled.\n";
+                output += ignoredRolesStr.toString();
+            }
+
+            if (guildSettings.areGlobalBansEnabled()) {
+                output += "\n\nGlobal bans are **enabled**.\n\n";
+            } else {
+                output += "\n\nGlobal bans are disabled.\n\n";
             }
 
             StringBuilder admins = new StringBuilder();
