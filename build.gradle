@@ -59,8 +59,8 @@ dependencies {
     //@formatter:on
 }
 
-wrapper() {
-    gradleVersion = '4.8'
+wrapper {
+    gradleVersion = '4.9'
     //noinspection UnnecessaryQualifiedReference
     distributionType = Wrapper.DistributionType.ALL
 }
