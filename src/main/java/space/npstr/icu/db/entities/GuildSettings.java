@@ -27,15 +27,16 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Type;
 import space.npstr.sqlsauce.entities.discord.BaseDiscordGuild;
 import space.npstr.sqlsauce.fp.types.EntityKey;
+import space.npstr.sqlsauce.hibernate.types.BasicType;
 
 import javax.annotation.Nullable;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * Created by napster on 25.01.18.
@@ -58,13 +59,15 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Column(name = "member_role_id", nullable = true)
     private Long memberRoleId;
 
-    @Type(type = "array-list-long")
+    @Type(type = "hash-set-basic")
+    @BasicType(Long.class)
     @Column(name = "admin_role_ids", columnDefinition = "bigint[]", nullable = false)
-    private ArrayList<Long> adminRoleIds = new ArrayList<>();
+    private HashSet<Long> adminRoleIds = new HashSet<>();
 
-    @Type(type = "array-list-long")
+    @Type(type = "hash-set-basic")
+    @BasicType(Long.class)
     @Column(name = "admin_user_ids", columnDefinition = "bigint[]", nullable = false)
-    private ArrayList<Long> adminUserIds = new ArrayList<>();
+    private HashSet<Long> adminUserIds = new HashSet<>();
 
     @Nullable
     @Column(name = "reporting_channel_id", nullable = true)
@@ -135,9 +138,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
 
     public GuildSettings addAdminRole(Role role) {
-        if (!adminRoleIds.contains(role.getIdLong())) {
-            adminRoleIds.add(role.getIdLong());
-        }
+        adminRoleIds.add(role.getIdLong());
         return this;
     }
 
@@ -150,9 +151,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     }
 
     public GuildSettings removeAdminRole(long roleId) {
-        while (adminRoleIds.contains(roleId)) {
-            adminRoleIds.remove(roleId);
-        }
+        adminRoleIds.remove(roleId);
         return this;
     }
 
@@ -167,9 +166,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
 
     public GuildSettings addAdminUser(Member member) {
-        if (!adminUserIds.contains(member.getUser().getIdLong())) {
-            adminUserIds.add(member.getUser().getIdLong());
-        }
+        adminUserIds.add(member.getUser().getIdLong());
         return this;
     }
 
@@ -182,9 +179,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     }
 
     public GuildSettings removeAdminUser(long userId) {
-        while (adminUserIds.contains(userId)) {
-            adminUserIds.remove(userId);
-        }
+        adminUserIds.remove(userId);
         return this;
     }
 

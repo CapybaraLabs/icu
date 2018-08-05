@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import space.npstr.sqlsauce.entities.MemberComposite;
 import space.npstr.sqlsauce.entities.SaucedEntity;
 import space.npstr.sqlsauce.fp.types.EntityKey;
+import space.npstr.sqlsauce.hibernate.types.BasicType;
 
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
@@ -35,9 +36,9 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -56,9 +57,10 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     @EmbeddedId
     private MemberComposite id;
 
-    @Type(type = "array-list-long")
+    @Type(type = "hash-set-basic")
+    @BasicType(Long.class)
     @Column(name = "role_ids", columnDefinition = "bigint[]")
-    private ArrayList<Long> roleIds = new ArrayList<>();
+    private HashSet<Long> roleIds = new HashSet<>();
 
     @Nullable
     @Column(name = "nickname", columnDefinition = "text", nullable = true)
@@ -84,7 +86,7 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
     }
 
     public Collection<Long> getRoleIds() {
-        return Collections.unmodifiableList(roleIds);
+        return Collections.unmodifiableCollection(roleIds);
     }
 
     public Collection<Role> getRoles(Function<Long, Guild> guildProvider) {
@@ -101,9 +103,7 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
 
     @CheckReturnValue
     public MemberRoles addRoleId(long roleId) {
-        if (!roleIds.contains(roleId)) {
-            roleIds.add(roleId);
-        }
+        roleIds.add(roleId);
         return this;
     }
 
@@ -126,9 +126,7 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
 
     @CheckReturnValue
     public MemberRoles removeRoleId(long roleId) {
-        while (roleIds.contains(roleId)) {
-            roleIds.remove(roleId);
-        }
+        roleIds.remove(roleId);
         return this;
     }
 
