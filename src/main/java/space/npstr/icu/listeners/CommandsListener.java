@@ -663,7 +663,7 @@ public class CommandsListener extends ThreadedListener {
                     + "lists in " + banLists.size() + " guilds for a total of " + totalBans.get() + " bans, and found "
                     + found.get() + " matches.").queue();
 
-        } else if (content.contains("status") || content.contains("help")) {
+        } else if (content.contains("status") || content.contains("config")) {
             String output = "";
             GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
 
@@ -759,6 +759,9 @@ public class CommandsListener extends ThreadedListener {
                 output += "Other admins:\n" + admins.toString() + "\n";
             }
 
+            event.getChannel().sendMessage(output).queue();
+        } else if (content.contains("help") || content.contains("commands")) {
+            String output = "";
             output += "\n\nCommands: (always mention me)\n\n";
             output += "`reset everyone`\n\t\tRemove the fake `@everyone` role.\n";
             output += "`set everyone @role`\n\t\tSet the fake `@everyone` role.\n";
@@ -782,7 +785,8 @@ public class CommandsListener extends ThreadedListener {
             output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).\n";
             output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
             output += "`nsa report`\n\t\tChecks all members of this guild for bans in other guilds.\n";
-            output += "`status` or `help`\n\t\tShow current config and command help.\n";
+            output += "`status` or `config`\n\t\tShow current configuration.\n";
+            output += "`help` or `commands`\n\t\tShow this command help.\n";
             event.getChannel().sendMessage(output).queue();
         }
     }
