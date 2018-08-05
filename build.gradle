@@ -36,8 +36,8 @@ dependencies {
     ext.sentryVersion           = '1.7.5'
     ext.okhttpVersion           = '3.11.0'
     ext.yamlVersion             = '1.21'
-    ext.sqlsauceVersion         = '0.2.3'
-    ext.hibernateVersion        = '5.2.17.Final'
+    ext.sqlsauceVersion         = '0.4.0'
+    ext.hibernateVersion        = '5.3.4.Final'
     ext.annotationsVersion      = '0.0.1'
     ext.jaxbApiVersion          = '2.3.0'
     ext.caffeineVersion         = '2.6.2'
@@ -48,9 +48,10 @@ dependencies {
     compile group: 'io.sentry',      name: 'sentry-logback',      version: ext.sentryVersion     // error aggregation
     compile group: 'com.squareup.okhttp3', name: 'okhttp',        version: ext.okhttpVersion     // http client
     compile group: 'org.yaml',       name: 'snakeyaml',           version: ext.yamlVersion       // parse yaml files
-    compile group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion // database lib
+    compile group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion   // database lib
     compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
-    compile group: 'org.hibernate',  name: 'hibernate-ehcache',   version: ext.hibernateVersion  // entity cacheing
+    compile group: 'org.hibernate',  name: 'hibernate-jcache',    version: ext.hibernateVersion  // 2nd level cache api
+    compile group: 'com.github.ben-manes.caffeine',name:'jcache', version: ext.caffeineVersion   // 2nd level cache implementation
     compile group: 'space.npstr',    name: 'annotations',         version: ext.annotationsVersion// advanced annotations
     compile group: 'javax.xml.bind', name: 'jaxb-api',            version: ext.jaxbApiVersion    // required by hibernate for java 9
     compile group: 'com.github.ben-manes.caffeine', name:'caffeine', version:ext.caffeineVersion // caches

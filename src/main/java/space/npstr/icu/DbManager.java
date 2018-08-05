@@ -17,8 +17,10 @@
 
 package space.npstr.icu;
 
+import com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider;
 import net.ttddyy.dsproxy.listener.logging.SLF4JLogLevel;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
+import org.hibernate.cache.jcache.internal.JCacheRegionFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.tool.schema.Action;
 import org.slf4j.Logger;
@@ -82,9 +84,9 @@ public class DbManager {
                     .setHibernateProperty(Environment.HBM2DDL_AUTO, Action.UPDATE.name().toLowerCase())
                     .setHibernateProperty(Environment.USE_SECOND_LEVEL_CACHE, true)
                     .setHibernateProperty(Environment.USE_QUERY_CACHE, true)
-                    .setHibernateProperty("net.sf.ehcache.configurationResourceName", "/ehcache.xml")
-                    .setHibernateProperty("hibernate.cache.provider_configuration_file_resource_path", "ehcache.xml")
-                    .setHibernateProperty("hibernate.cache.region.factory_class", "org.hibernate.cache.ehcache.EhCacheRegionFactory")
+                    .setHibernateProperty(Environment.CACHE_REGION_FACTORY, JCacheRegionFactory.class.getName())
+                    .setHibernateProperty("hibernate.javax.cache.provider", CaffeineCachingProvider.class.getName())
+                    .setHibernateProperty("hibernate.javax.cache.missing_cache_strategy", "fail")
 
                     //hide some exception spam on start, as postgres does not support CLOBs
                     // https://stackoverflow.com/questions/43905119/postgres-error-method-org-postgresql-jdbc-pgconnection-createclob-is-not-imple
