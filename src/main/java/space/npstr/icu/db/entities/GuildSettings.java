@@ -81,6 +81,12 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Column(name = "log_channel_id", nullable = true)
     private Long logChannelId;
 
+    @Type(type = "hash-set-basic")
+    @BasicType(Long.class)
+    @Column(name = "ignored_role_ids", columnDefinition = "bigint[]", nullable = false)
+    @ColumnDefault("array[]::bigint[]")
+    private HashSet<Long> ignoredRoleIds = new HashSet<>();
+
     //jpa / database wrapper
     GuildSettings() {
     }
@@ -262,5 +268,39 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     public GuildSettings resetLogChannel() {
         this.logChannelId = null;
         return this;
+    }
+
+    public Collection<Long> getIgnoredRoleIds() {
+        return Collections.unmodifiableCollection(ignoredRoleIds);
+    }
+
+    public GuildSettings addIgnoredRole(Role role) {
+        this.ignoredRoleIds.add(role.getIdLong());
+        return this;
+    }
+
+    public GuildSettings addIgnoredRoles(Collection<Role> roles) {
+        GuildSettings result = this;
+        for (Role role : roles) {
+            result = addIgnoredRole(role);
+        }
+        return result;
+    }
+
+    public GuildSettings removeIgnoredRoleId(long roleId) {
+        this.ignoredRoleIds.remove(roleId);
+        return this;
+    }
+
+    public GuildSettings removeIgnoredRole(Role role) {
+        return removeIgnoredRoleId(role.getIdLong());
+    }
+
+    public boolean isIgnoredRoleId(long roleId) {
+        return ignoredRoleIds.contains(roleId);
+    }
+
+    public boolean isIgnoredRole(Role role) {
+        return isIgnoredRoleId(role.getIdLong());
     }
 }

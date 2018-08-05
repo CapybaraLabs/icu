@@ -29,6 +29,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.icu.db.entities.MemberRoles;
 import space.npstr.sqlsauce.DatabaseWrapper;
 import space.npstr.sqlsauce.entities.MemberComposite;
@@ -123,6 +124,8 @@ public class RoleChangesListener extends ThreadedListener {
                 }
             }
 
+            var guildSettingsKey = EntityKey.of(event.getGuild().getIdLong(), GuildSettings.class);
+            GuildSettings guildSettings = wrapperSupp.get().getOrCreate(guildSettingsKey);
             roles = roles.stream().filter(
                     role -> {
                         if (role.isManaged()) {
@@ -131,6 +134,10 @@ public class RoleChangesListener extends ThreadedListener {
                         }
                         if (!self.canInteract(role)) {
                             log.info("Ignoring role {} on member {} in guild {} because I can't interact with it", role, event.getMember(), event.getGuild());
+                            return false;
+                        }
+                        if (guildSettings.isIgnoredRole(role)) {
+                            log.info("Ignoring role {} on member {} in guild {} because it is ignored according to guild settings", role, event.getMember(), event.getGuild());
                             return false;
                         }
                         return true;

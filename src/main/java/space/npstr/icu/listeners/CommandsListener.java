@@ -328,6 +328,74 @@ public class CommandsListener extends ThreadedListener {
 
             //nothing found for the given input
             event.getChannel().sendMessage("Please mention a role or member or use their id.").queue();
+        } else if (content.contains("add ignored")) {
+            List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
+            for (String str : content.split("\\p{javaSpaceChar}+")) {
+                try {
+                    long id = Long.parseUnsignedLong(str);
+                    Role roleById = guild.getRoleById(id);
+                    if (roleById != null) {
+                        rolesToAdd.add(roleById);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+
+            if (rolesToAdd.isEmpty()) {
+                event.getChannel().sendMessage("Please mention or use an id of at least one role that you want to be ignored").queue();
+                return;
+            }
+
+            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addIgnoredRoles(rolesToAdd));
+            List<String> added = rolesToAdd.stream().map(r -> (IMentionable) r)
+                    .map(IMentionable::getAsMention).collect(Collectors.toList());
+
+            event.getChannel().sendMessage("Added " + String.join(", ", added) + " as ignored roles.").queue();
+        } else if (content.contains("remove ignored")) {
+            List<Role> rolesToRemove = new ArrayList<>(msg.getMentionedRoles());
+            if (!rolesToRemove.isEmpty()) {
+                Role role = rolesToRemove.get(0);
+                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                    if (guildSettings.isIgnoredRole(role)) {
+                        event.getChannel().sendMessage("Removing role " + role.getName() + " " + role.getId() + " from ignored roles.").queue();
+                    } else {
+                        event.getChannel().sendMessage("Role " + role.getName() + " " + role.getId() + " is not an ignored role.").queue();
+                    }
+                    return guildSettings.removeIgnoredRole(role);
+                });
+                return;
+            }
+
+            List<Long> roleIdsToRemove = new ArrayList<>();
+            for (String str : content.split("\\p{javaSpaceChar}+")) {
+                try {
+                    roleIdsToRemove.add(Long.parseUnsignedLong(str));
+                } catch (NumberFormatException ignored) {}
+            }
+
+            if (!roleIdsToRemove.isEmpty()) {
+                long roleId = roleIdsToRemove.get(0);
+                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                    Role role = guild.getRoleById(roleId);
+                    if (guildSettings.isIgnoredRoleId(roleId)) {
+                        String roleName = role != null ? role.getName() : "unknown (role deleted ?)";
+                        event.getChannel().sendMessage("Removing role " + roleName + " " + roleId + " from ignored roles.").queue();
+                    } else {
+                        String message;
+                        if (role != null) {
+                            message = "Role " + role.getName() + " " + role.getId() + " is not ignored.";
+                        } else {
+                            message = "No role with id " + roleId + " found in neither the guild, nor my database.";
+                        }
+                        event.getChannel().sendMessage(message).queue();
+                    }
+
+                    return guildSettings.removeIgnoredRoleId(roleId);
+                });
+                return;
+            }
+
+            //nothing found for the given input
+            event.getChannel().sendMessage("Please mention a role or member or use their id.").queue();
         } else if (content.contains("add role")) {
             String adjustedContent = content.replace("add role", "");
             //identify user
@@ -692,6 +760,8 @@ public class CommandsListener extends ThreadedListener {
             output += "`set log #channel`\n\t\tSet the log channel for bans, unbans and kicks.\n";
             output += "`add admin @role or @member or id`\n\t\tAdd admins for this guild.\n";
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
+            output += "`add ignored @role or id`\n\t\tAdd ignored role for this guild.\n";
+            output += "`remove ignored @role or id`\n\t\tRemove ignored role for this guild.\n";
             output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";
             output += "`enable global bans`\n\t\tEnable global ban list curated by the bot owner.\n";
