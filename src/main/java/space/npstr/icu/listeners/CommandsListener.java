@@ -37,6 +37,7 @@ import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -590,6 +591,32 @@ public class CommandsListener extends ThreadedListener {
             wrapperSupp.get().findApplyAndMerge(GlobalBan.key(targetUser), ban -> ban.setReason(reason));
             event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
                     + " added to global bans with reason: **" + reason + "**").queue();
+        } else if (content.contains("global mass ban")) {
+            if (!isBotOwner(event.getAuthor())) {
+                event.getChannel().sendMessage("Sorry, adding and removing global bans is reserved for the bot owner").queue();
+                return;
+            }
+
+            String[] split = content.split("global mass ban");
+
+            String userIds = split[0].trim();
+            String reason = split[1].trim();
+
+            if (reason.isEmpty()) {
+                event.getChannel().sendMessage("Please provide a reason for the global mass ban.").queue();
+                return;
+            }
+
+            Set<User> usersToBan = Arrays.stream(userIds.split("\\p{javaSpaceChar}+"))
+                    .map(possibleUserId -> this.getUserFromId(possibleUserId, shardManagerSupp.get()))
+                    .flatMap(Optional::stream)
+                    .collect(Collectors.toSet());
+
+            for (User userToBan : usersToBan) {
+                wrapperSupp.get().findApplyAndMerge(GlobalBan.key(userToBan), ban -> ban.setReason(reason));
+            }
+
+            event.getChannel().sendMessage("**" + usersToBan.size() + "** users added to global bans with reason: **" + reason + "**").queue();
         } else if (content.contains("global unban")) {
             if (!isBotOwner(event.getAuthor())) {
                 event.getChannel().sendMessage("Sorry, adding and removing global bans is reserved for the bot owner").queue();
@@ -783,6 +810,7 @@ public class CommandsListener extends ThreadedListener {
             output += "`disable global bans`\n\t\tDisable global ban list curated by the bot owner.\n";
             output += "`list global bans`\n\t\tList all globally banned users with reasons.\n";
             output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).\n";
+            output += "`<space delimited user ids> global mass ban <reason>\n\t\tGlobally ban a ton of users (bot owner only).\n";
             output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
             output += "`nsa report`\n\t\tChecks all members of this guild for bans in other guilds.\n";
             output += "`status` or `config`\n\t\tShow current configuration.\n";
@@ -804,6 +832,25 @@ public class CommandsListener extends ThreadedListener {
                 || dbWrapper.getOrCreate(GuildSettings.key(member.getGuild())).isAdmin(member);
     }
 
+    private Optional<User> getUserFromId(String possibleId, ShardManager shardManager) {
+        long userId;
+        try {
+            userId = Long.parseUnsignedLong(possibleId);
+        } catch (NumberFormatException ignored) {
+            return Optional.empty();
+        }
+
+        User user = shardManager.getUserById(userId);
+
+        if (user == null) {
+            try {
+                user = shardManager.getShards().get(0)
+                        .retrieveUserById(userId)
+                        .submit().get(1, TimeUnit.MINUTES);
+            } catch (Exception ignored) {}
+        }
+        return Optional.ofNullable(user);
+    }
 
     //adjusted content = message without the command and other stuff thats definitely not the user name
     private static Set<User> identifyUser(Message msg, String adjustedContent, ShardManager shardManager) {
