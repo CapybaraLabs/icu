@@ -8,9 +8,7 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
 
   bot:
-    #build: .                                       # build locally. make sure to build the jar first
-    #image: registry.gitlab.com/napstr/icu:master   # gitlab docker registry
-    image: napstr/icu:master                        # github + travis + docker hub
+    image: napstr/icu:master
     restart: on-failure:3
     depends_on:
       - db
@@ -20,7 +18,6 @@ services:
       - ./logs/gc:/opt/icu/logs/gc
     entrypoint:
       - java
-      - -jar
       - -Xmx256m
       - -XX:+HeapDumpOnOutOfMemoryError
       - -XX:HeapDumpPath=emergencydump.hprof
@@ -28,11 +25,5 @@ services:
       - -XX:+UseG1GC
       - -XX:+ParallelRefProcEnabled
       - -XX:+UseStringDeduplication
+      - -jar
       - icu.jar
-
-  watchtower:
-    image: v2tec/watchtower
-    restart: on-failure:3
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --interval 300 #seconds
