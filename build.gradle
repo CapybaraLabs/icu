@@ -3,9 +3,9 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id 'java'
     id 'application'
-    id 'idea'
-    id 'com.gorylenko.gradle-git-properties' version '1.4.21'
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'com.gorylenko.gradle-git-properties' version '2.0.0'
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
+    id 'com.github.ben-manes.versions' version '0.21.0'
 }
 
 
@@ -17,8 +17,7 @@ ext {
 
 mainClassName = 'space.npstr.icu.Main'
 
-sourceCompatibility = 10
-targetCompatibility = 10
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     jcenter()                               // JDA, maybe others
@@ -31,17 +30,17 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.7.1_389'
+    ext.jdaVersion              = '3.8.3_463'
     ext.logbackVersion          = '1.2.3'
-    ext.sentryVersion           = '1.7.5'
-    ext.okhttpVersion           = '3.11.0'
-    ext.yamlVersion             = '1.21'
-    ext.sqlsauceVersion         = '0.4.0'
-    ext.hibernateVersion        = '5.3.4.Final'
+    ext.sentryVersion           = '1.7.22'
+    ext.okhttpVersion           = '3.14.1'
+    ext.yamlVersion             = '1.24'
+    ext.sqlsauceVersion         = '0.4.2'
+    ext.hibernateVersion        = '5.4.2.Final'
     ext.annotationsVersion      = '0.0.1'
-    ext.jaxbApiVersion          = '2.3.0'
-    ext.caffeineVersion         = '2.6.2'
-    ext.dsProxyVersion          = '1.4.9'
+    ext.jaxbApiVersion          = '2.3.1'
+    ext.caffeineVersion         = '2.7.0'
+    ext.dsProxyVersion          = '1.5.1'
 
     compile group: 'net.dv8tion',    name: 'JDA',                 version: ext.jdaVersion        // discord API
     compile group: 'ch.qos.logback', name: 'logback-classic',     version: ext.logbackVersion    // logging framework
@@ -58,12 +57,6 @@ dependencies {
     compile group: 'net.ttddyy',     name: 'datasource-proxy',    version: ext.dsProxyVersion    // log proxy for db queries
 
     //@formatter:on
-}
-
-wrapper {
-    gradleVersion = '4.9'
-    //noinspection UnnecessaryQualifiedReference
-    distributionType = Wrapper.DistributionType.ALL
 }
 
 compileJava.dependsOn 'clean'

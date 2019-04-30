@@ -1,7 +1,9 @@
+dist: xenial
 sudo: required
+install: true  # skips unnecessary "gradle assemble" install step
 
 services:
-- docker
+  - docker
 
 env:
   global:
@@ -14,25 +16,25 @@ language: java
 cache:
   directories:
     - "$HOME/.m2"
-    - "$HOME/.gradle"
-    - ".gradle/wrapper"
-    - ".gradle/caches"
+    - "$HOME/.gradle/wrapper"
+    - "$HOME/.gradle/caches"
 
-before_install:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+stages:
+  - build & publish
 
-matrix:
+jobs:
+  fast_finish: true
   include:
-    - env: JDK='OpenJDK 10'
-      install: . ./install-jdk.sh -F 10 -L GPL
-
-script:
-  - "./gradlew build --info"
-  - IMAGE_TAG=$(echo ${TRAVIS_BRANCH} | sed -e 's/\//_/g')
-  - echo $IMAGE_TAG
-  - docker build --tag "napstr/icu:$IMAGE_TAG" .
-
-after_success:
-  - echo "$DOCKER_PASSWORD" | docker login -u="$DOCKER_USERNAME" --password-stdin
-  - docker push napstr/icu:$IMAGE_TAG
-  - docker logout
+    - stage: build & publish
+      jdk: openjdk11
+      script:
+        - java -Xmx32m -version
+        - ./gradlew build --info
+        - IMAGE_TAG=$(echo ${TRAVIS_BRANCH} | sed -e 's/\//_/g')
+        - echo $IMAGE_TAG
+        - IMAGE_NAME=$DOCKER_USERNAME/aki:$IMAGE_TAG
+        - docker build --tag "$IMAGE_NAME" .
+      after_success:
+        - echo "$DOCKER_PASSWORD" | docker login -u="$DOCKER_USERNAME" --password-stdin
+        - docker push $IMAGE_NAME
+        - docker logout

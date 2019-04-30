@@ -1,9 +1,8 @@
 package space.npstr.icu.info;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 /**
@@ -13,7 +12,7 @@ import java.util.Properties;
  */
 public class GitRepoState {
 
-    private static final Logger log = LoggerFactory.getLogger(GitRepoState.class);
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GitRepoState.class);
 
     public static GitRepoState getGitRepositoryState() {
         return GitRepoStateHolder.INSTANCE;
@@ -31,7 +30,7 @@ public class GitRepoState {
     public final String commitUserEmail;
     public final String commitMessageFull;
     public final String commitMessageShort;
-    public final long commitTime;
+    public final long commitTime; //epoch seconds
 
     @SuppressWarnings("ConstantConditions")
     public GitRepoState(String propsName) {
@@ -50,6 +49,17 @@ public class GitRepoState {
         this.commitUserEmail = String.valueOf(properties.getOrDefault("git.commit.user.email", ""));
         this.commitMessageFull = String.valueOf(properties.getOrDefault("git.commit.message.full", ""));
         this.commitMessageShort = String.valueOf(properties.getOrDefault("git.commit.message.short", ""));
-        this.commitTime = Long.parseLong(String.valueOf(properties.getOrDefault("git.commit.time", "0"))); //epoch seconds
+        final String time = String.valueOf(properties.get("git.commit.time"));
+        if (time == null) {
+            this.commitTime = 0;
+        } else {
+            this.commitTime = OffsetDateTime.from(getDtf().parse(time)).toEpochSecond();
+        }
+    }
+
+    //DateTimeFormatter is not threadsafe
+    private DateTimeFormatter getDtf() {
+        // https://github.com/n0mer/gradle-git-properties/issues/71
+        return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
     }
 }
