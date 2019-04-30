@@ -1,8 +1,8 @@
-version: '3'
+version: '3.6'
 services:
 
   db:
-    image: napstr/icu-postgres
+    image: napstr/icu-postgres:10
     restart: always
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
