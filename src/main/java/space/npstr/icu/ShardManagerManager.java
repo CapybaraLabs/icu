@@ -27,6 +27,7 @@ import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
 import space.npstr.icu.listeners.MemberRoleManager;
 import space.npstr.icu.listeners.NahCrossFunctionality;
+import space.npstr.icu.listeners.ReactionBanListener;
 import space.npstr.icu.listeners.RoleChangesListener;
 import space.npstr.icu.listeners.SuspiciousUsersWarner;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -37,7 +38,7 @@ import java.util.function.Supplier;
 
 /**
  * Created by napster on 13.02.18.
- *
+ * <p>
  * This class's name is totally not a meme.
  */
 @ThreadSafe
@@ -88,6 +89,7 @@ public class ShardManagerManager {
                 .addEventListeners(new SuspiciousUsersWarner(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new BanLogs(wrapperSupplier))
                 .addEventListeners(new NahCrossFunctionality())
+                .addEventListeners(new ReactionBanListener(wrapperSupplier))
                 .setEnableShutdownHook(false)
                 .setAudioEnabled(false);
         try {

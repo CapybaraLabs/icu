@@ -28,10 +28,9 @@ import net.dv8tion.jda.core.requests.RequestFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.AuditLogUtil;
-import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.icu.db.entities.ReportingChannelFetcher;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
-import javax.annotation.CheckReturnValue;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,11 +51,11 @@ public class SuspiciousUsersWarner extends ThreadedListener {
 
     private static final int MIN_ACCOUNT_AGE_MINUTES = 30;
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
+    private final ReportingChannelFetcher reportingChannelFetcher;
     private final Supplier<ShardManager> shardManagerSupp;
 
     public SuspiciousUsersWarner(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
-        this.wrapperSupp = wrapperSupplier;
+        this.reportingChannelFetcher = new ReportingChannelFetcher(wrapperSupplier);
         this.shardManagerSupp = shardManagerSupplier;
     }
 
@@ -83,7 +82,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
                 return;
             }
 
-            Optional<TextChannel> textChannel = fetchWorkingReportingChannel(guild);
+            Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(guild);
             if (!textChannel.isPresent()) {
                 return;
             }
@@ -96,7 +95,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
     }
 
     private void memberJoined(GuildMemberJoinEvent event) {
-        Optional<TextChannel> textChannel = fetchWorkingReportingChannel(event.getGuild());
+        Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(event.getGuild());
         if (!textChannel.isPresent()) {
             return;
         }
@@ -139,31 +138,5 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
             reportingChannel.sendMessage(user + out.toString()).queue();
         }
-    }
-
-    //returns the reporting channe lwhere we can post in of the guild
-    // and takes appropriate measures if it failed to do so
-    @CheckReturnValue
-    private Optional<TextChannel> fetchWorkingReportingChannel(Guild guild) {
-        Long reportingChannelId = wrapperSupp.get().getOrCreate(GuildSettings.key(guild)).getReportingChannelId();
-        if (reportingChannelId == null) {
-            return Optional.empty();
-        }
-        TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
-        if (reportingChannel == null || !reportingChannel.canTalk()) {
-            for (TextChannel textChannel : guild.getTextChannels()) {
-                if (textChannel.canTalk()) {
-                    textChannel.sendMessage("A reporting channel <#" + reportingChannelId + "> was configured, "
-                            + "but it appears to be deleted or I can't write there. Please tell an admin of this guild "
-                            + "to either fix permissions, set a new channel, or reset my reporting channel configuration.").queue();
-                    return Optional.empty();
-                }
-            }
-            // meh...cant report the issue, raising an warn/error level log is kinda ok since this is selfhosted
-            log.warn("Guild {} has a broken reporting channel", guild);
-            return Optional.empty();
-        }
-
-        return Optional.of(reportingChannel);
     }
 }

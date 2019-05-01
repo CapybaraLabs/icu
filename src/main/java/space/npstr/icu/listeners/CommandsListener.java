@@ -20,6 +20,7 @@ package space.npstr.icu.listeners;
 import net.dv8tion.jda.bot.entities.ApplicationInfo;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Emote;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.IMentionable;
 import net.dv8tion.jda.core.entities.Member;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.icu.db.entities.ReactionBan;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
 import java.util.ArrayList;
@@ -47,6 +49,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -690,6 +693,84 @@ public class CommandsListener extends ThreadedListener {
                     + "lists in " + banLists.size() + " guilds for a total of " + totalBans.get() + " bans, and found "
                     + found.get() + " matches.").queue();
 
+        } else if (content.contains("add reaction ban")) {
+            String[] split = content.trim().split("add reaction ban");
+
+            List<TextChannel> channels = msg.getMentionedChannels();
+            if (channels.isEmpty()) {
+                event.getChannel().sendMessage("Please mention at least one channel to add a reaction ban to").queue();
+                return;
+            }
+
+            List<Emote> emotes = msg.getEmotes();
+            String[] emojis = split[1].trim().split("\\s+");
+
+            if (emotes.isEmpty() && emojis.length == 0) {
+                event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
+                return;
+            }
+
+            for (TextChannel channel : channels) {
+                for (Emote emote : emotes) {
+                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, emote), Function.identity());
+                }
+
+                for (String emoji : emojis) {
+                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, emoji), Function.identity());
+                }
+            }
+
+            event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
+        } else if (content.contains("remove reaction ban")) {
+            String[] split = content.trim().split("remove reaction ban");
+
+            List<TextChannel> channels = msg.getMentionedChannels();
+            if (channels.isEmpty()) {
+                event.getChannel().sendMessage("Please mention at least one channel to remove a reaction ban from").queue();
+                return;
+            }
+
+            List<Emote> emotes = msg.getEmotes();
+            String[] emojis = split[1].trim().split("\\s+");
+
+            if (emotes.isEmpty() && emojis.length == 0) {
+                event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
+                return;
+            }
+
+            for (TextChannel channel : channels) {
+                for (Emote emote : emotes) {
+                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emote));
+                }
+
+                for (String emoji : emojis) {
+                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emoji));
+                }
+            }
+
+            event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
+        } else if (content.contains("list reaction bans")) {
+            List<ReactionBan> reactionBans = wrapperSupp.get().loadAll(ReactionBan.class).stream()
+                    .filter(reactionBan -> guild.getTextChannelById(reactionBan.getId().getChannelId()) != null)
+                    .collect(Collectors.toList());
+
+            StringBuilder output = new StringBuilder();
+            if (reactionBans.isEmpty()) {
+                output.append("No reaction bans are set up currently.");
+            } else {
+                output.append("Reaction bans:\n\n");
+                for (ReactionBan reactionBan : reactionBans) {
+                    output
+                            .append("<#")
+                            .append(reactionBan.getId().getChannelId())
+                            .append("> ")
+                            .append(reactionBan.getId().getEmote())
+                            .append("\n");
+                }
+            }
+
+            event.getChannel().sendMessage(output).queue();
+
         } else if (content.contains("status") || content.contains("config")) {
             String output = "";
             GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
@@ -813,6 +894,9 @@ public class CommandsListener extends ThreadedListener {
             output += "`<space delimited user ids> global mass ban <reason>\n\t\tGlobally ban a ton of users (bot owner only).\n";
             output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
             output += "`nsa report`\n\t\tChecks all members of this guild for bans in other guilds.\n";
+            output += "`#channel :custom_emote: add reaction ban :emoji:`\n\t\tAdd a reaction ban for a channel and emote.\n";
+            output += "`#channel :custom_emote: ... remove reaction ban :emoji:`\n\t\tRemove a reaction ban.\n";
+            output += "`list reaction bans`\n\t\tShow all reaction bans set up for channels of this guild.\n";
             output += "`status` or `config`\n\t\tShow current configuration.\n";
             output += "`help` or `commands`\n\t\tShow this command help.\n";
             event.getChannel().sendMessage(output).queue();

@@ -13,6 +13,7 @@ It is currently in heavy use, loved and hated, on several big (read: a few thous
 - Having a member role assigned to every human user of a guild
 - Can warn you if a user joins the server who is banned on another icu server, or an existing member of your server is banned on another server that icu is member of
 - Tired of trolls hitting several of your servers? Enforce global bans between all your servers.
+- Autoban users for reacting with toxic emojis to announcements, like 🖕
 
 
 
