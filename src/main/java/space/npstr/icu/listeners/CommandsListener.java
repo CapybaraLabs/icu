@@ -797,18 +797,28 @@ public class CommandsListener extends ThreadedListener {
                 RequestFuture<?> iterableFuture = channel.getIterableHistory().forEachAsync(message -> {
                     message.getReactions().forEach(reaction -> {
                         MessageReaction.ReactionEmote reactionEmote = reaction.getReactionEmote();
-                        Optional<Function<User, RestAction>> cleanup = Optional.empty();
+                        Optional<Function<User, RestAction<Void>>> cleanup = Optional.empty();
                         if (reactionEmote.isEmote() && emotes.contains(reactionEmote.getEmote())) {
                             cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getEmote(), user));
                         } else if (emojis.contains(reactionEmote.getName())) {
                             cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getName(), user));
                         }
 
-                        cleanup.ifPresent(action -> reaction.getUsers().submit()
-                                .thenAccept(users -> users.forEach(user -> {
-                                    futures.add(action.apply(user).submit());
-                                    reactionsRemoved.incrementAndGet();
-                                })));
+                        cleanup.ifPresent(action -> {
+                            RequestFuture<List<User>> getUsers = reaction.getUsers().submit();
+                            futures.add(getUsers);
+                            getUsers.thenAccept(users -> users.forEach(user -> {
+                                RequestFuture<Void> future = action.apply(user).submit();
+                                futures.add(future);
+                                future.whenComplete((__, t) -> {
+                                    log.debug("Deleted reactions of user {} on message {}", user, message);
+                                    if (t != null) {
+                                        log.error("Failed to delete reaction", t);
+                                    }
+                                });
+                                reactionsRemoved.incrementAndGet();
+                            }));
+                        });
                     });
 
                     return true;
@@ -816,8 +826,6 @@ public class CommandsListener extends ThreadedListener {
                 futures.add(iterableFuture);
             }
 
-            //wait a bit cause theres a chance for a race condition here as the JDA iterator
-            // seems to complete before actually having processed all the messages
             CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS)
                     .execute(() -> RequestFuture.allOf(futures).whenComplete((__, t) ->
                             event.getChannel().sendMessage("Removed a total of " + reactionsRemoved.get() + " reactions!").queue()));
