@@ -25,11 +25,13 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.IMentionable;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.requests.RequestFuture;
+import net.dv8tion.jda.core.requests.RestAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
@@ -47,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -770,6 +773,54 @@ public class CommandsListener extends ThreadedListener {
             }
 
             event.getChannel().sendMessage(output).queue();
+
+        } else if (content.contains("clear reactions")) {
+            String[] split = content.split("clear reactions");
+            List<TextChannel> channels = msg.getMentionedChannels();
+            if (channels.isEmpty()) {
+                event.getChannel().sendMessage("Please mention at least on channel.").queue();
+                return;
+            }
+
+            List<Emote> emotes = msg.getEmotes();
+            List<String> emojis = Arrays.asList(split[1].trim().split("\\s+"));
+
+            if (emotes.isEmpty() && emojis.isEmpty()) {
+                event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
+                return;
+            }
+
+            List<RequestFuture> futures = new ArrayList<>();
+            AtomicInteger reactionsRemoved = new AtomicInteger(0);
+
+            for (TextChannel channel : channels) {
+                RequestFuture<?> iterableFuture = channel.getIterableHistory().forEachAsync(message -> {
+                    message.getReactions().forEach(reaction -> {
+                        MessageReaction.ReactionEmote reactionEmote = reaction.getReactionEmote();
+                        Optional<Function<User, RestAction>> cleanup = Optional.empty();
+                        if (reactionEmote.isEmote() && emotes.contains(reactionEmote.getEmote())) {
+                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getEmote(), user));
+                        } else if (emojis.contains(reactionEmote.getName())) {
+                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getName(), user));
+                        }
+
+                        cleanup.ifPresent(action -> reaction.getUsers().submit()
+                                .thenAccept(users -> users.forEach(user -> {
+                                    futures.add(action.apply(user).submit());
+                                    reactionsRemoved.incrementAndGet();
+                                })));
+                    });
+
+                    return true;
+                });
+                futures.add(iterableFuture);
+            }
+
+            //wait a bit cause theres a chance for a race condition here as the JDA iterator
+            // seems to complete before actually having processed all the messages
+            CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS)
+                    .execute(() -> RequestFuture.allOf(futures).whenComplete((__, t) ->
+                            event.getChannel().sendMessage("Removed a total of " + reactionsRemoved.get() + " reactions!").queue()));
 
         } else if (content.contains("status") || content.contains("config")) {
             String output = "";
