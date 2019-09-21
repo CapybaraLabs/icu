@@ -30,31 +30,32 @@ repositories {
 
 dependencies {
     //@formatter:off
-    ext.jdaVersion              = '3.8.3_463'
-    ext.logbackVersion          = '1.2.3'
-    ext.sentryVersion           = '1.7.22'
-    ext.okhttpVersion           = '3.14.1'
-    ext.yamlVersion             = '1.24'
-    ext.sqlsauceVersion         = '0.4.2'
-    ext.hibernateVersion        = '5.4.2.Final'
-    ext.annotationsVersion      = '0.0.1'
-    ext.jaxbApiVersion          = '2.3.1'
-    ext.caffeineVersion         = '2.7.0'
-    ext.dsProxyVersion          = '1.5.1'
+    ext {
+        jdaVersion              = '3.8.3_463'
+        logbackVersion          = '1.2.3'
+        sentryVersion           = '1.7.22'
+        okhttpVersion           = '3.14.1'
+        yamlVersion             = '1.24'
+        sqlsauceVersion         = '0.4.2'
+        hibernateVersion        = '5.4.2.Final'
+        annotationsVersion      = '0.0.1'
+        jaxbApiVersion          = '2.3.1'
+        caffeineVersion         = '2.7.0'
+        dsProxyVersion          = '1.5.1'
+    }
 
-    compile group: 'net.dv8tion',    name: 'JDA',                 version: ext.jdaVersion        // discord API
-    compile group: 'ch.qos.logback', name: 'logback-classic',     version: ext.logbackVersion    // logging framework
-    compile group: 'io.sentry',      name: 'sentry-logback',      version: ext.sentryVersion     // error aggregation
-    compile group: 'com.squareup.okhttp3', name: 'okhttp',        version: ext.okhttpVersion     // http client
-    compile group: 'org.yaml',       name: 'snakeyaml',           version: ext.yamlVersion       // parse yaml files
-    compile group: 'space.npstr.SqlSauce', name: 'sqlsauce-core', version: ext.sqlsauceVersion   // database lib
-    compile group: 'space.npstr.SqlSauce',name:'discord-entities',version: ext.sqlsauceVersion   // additional db module
-    compile group: 'org.hibernate',  name: 'hibernate-jcache',    version: ext.hibernateVersion  // 2nd level cache api
-    compile group: 'com.github.ben-manes.caffeine',name:'jcache', version: ext.caffeineVersion   // 2nd level cache implementation
-    compile group: 'space.npstr',    name: 'annotations',         version: ext.annotationsVersion// advanced annotations
-    compile group: 'javax.xml.bind', name: 'jaxb-api',            version: ext.jaxbApiVersion    // required by hibernate for java 9
-    compile group: 'com.github.ben-manes.caffeine', name:'caffeine', version:ext.caffeineVersion // caches
-    compile group: 'net.ttddyy',     name: 'datasource-proxy',    version: ext.dsProxyVersion    // log proxy for db queries
+    implementation "net.dv8tion:JDA:$jdaVersion"
+    implementation "ch.qos.logback:logback-classic:$logbackVersion"
+    implementation "io.sentry:sentry-logback:$sentryVersion"
+    implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
+    implementation "org.yaml:snakeyaml:$yamlVersion"
+    implementation "space.npstr.SqlSauce:sqlsauce-core:$sqlsauceVersion"
+    implementation "space.npstr.SqlSauce:discord-entities:$sqlsauceVersion"
+    implementation "org.hibernate:hibernate-jcache:$hibernateVersion"
+    implementation "com.github.ben-manes.caffeine:jcache:$caffeineVersion"
+    implementation "space.npstr:annotations:$annotationsVersion"
+    implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
+    implementation "net.ttddyy:datasource-proxy:$dsProxyVersion"
 
     //@formatter:on
 }
