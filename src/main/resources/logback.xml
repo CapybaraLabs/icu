@@ -108,12 +108,7 @@
 
 
     <!-- shut up hibernate debug logs -->
-    <logger name="org.hibernate" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT"/>
-        <appender-ref ref="INFOFILE"/>
-        <appender-ref ref="ERRORFILE"/>
-        <appender-ref ref="SENTRY"/>
-    </logger>
+    <logger name="org.hibernate" level="WARN" />
 
     <root level="debug">
         <appender-ref ref="STDOUT"/>
