@@ -77,3 +77,41 @@ processResources {
         ]
     }
 }
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+// ./gradlew resolveAndLockAll --write-locks
+task resolveAndLockAll {
+    doFirst {
+        assert gradle.startParameter.writeDependencyLocks
+    }
+    doLast {
+        configurations.all {
+            resolutionStrategy {
+                componentSelection properReleasesOnly()
+            }
+        }
+        configurations
+                .findAll { it.canBeResolved }
+                .each { it.resolve() }
+    }
+}
+
+dependencyUpdates.resolutionStrategy {
+    componentSelection properReleasesOnly()
+}
+
+static def properReleasesOnly() {
+    return { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3'].any {
+                q -> selection.candidate.version.toLowerCase().contains(q)
+            }
+            if (rejected) {
+                selection.reject('Release candidate')
+            }
+        }
+    }
+}
