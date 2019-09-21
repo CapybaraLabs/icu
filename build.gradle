@@ -62,7 +62,7 @@ compileJava.options.encoding = 'UTF-8'
 compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 
 shadowJar {
-    archiveName = "icu.jar"
+    archiveFileName.set("icu.jar")
 }
 
 processResources {
