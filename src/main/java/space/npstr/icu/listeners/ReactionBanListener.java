@@ -48,7 +48,31 @@ public class ReactionBanListener extends ListenerAdapter {
     @Override
     public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
         Optional.ofNullable(wrapperSupp.get().getEntity(ReactionBan.key(event.getChannel(), event.getReactionEmote())))
-                .ifPresent(ban -> issueBan(event.getGuild(), event.getUser(), ban));
+                .ifPresent(ban -> {
+                    deleteReaction(event);
+                    issueBan(event.getGuild(), event.getUser(), ban);
+                });
+    }
+
+    private void deleteReaction(GuildMessageReactionAddEvent event) {
+        Guild guild = event.getGuild();
+        TextChannel channel = event.getChannel();
+        if (!guild.getSelfMember().hasPermission(channel, Permission.MESSAGE_MANAGE)) {
+            //try to report the issue
+            GuildSettings settings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
+            Long reportingChannelId = settings.getReportingChannelId();
+            if (reportingChannelId != null) {
+                TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
+                if (reportingChannel != null) {
+                    reportingChannel.sendMessage("I am missing the message manage permission in "
+                            + channel.getAsMention() + " to delete a banned reaction."
+                            + " Please fix the permission or remove reaction bans for this guild.").queue();
+                }
+            }
+            return;
+        }
+
+        event.getReaction().removeReaction(event.getUser()).queue();
     }
 
     private void issueBan(Guild guild, User user, ReactionBan reactionBan) {
