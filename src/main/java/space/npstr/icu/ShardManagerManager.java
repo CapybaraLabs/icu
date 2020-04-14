@@ -17,9 +17,11 @@
 
 package space.npstr.icu;
 
-import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.listeners.BanLogs;
@@ -79,9 +81,11 @@ public class ShardManagerManager {
 
     private static ShardManager initShardManager(Supplier<DatabaseWrapper> wrapperSupplier,
                                                  Supplier<ShardManager> shardManagerSupplier) {
-        DefaultShardManagerBuilder shardBuilder = new DefaultShardManagerBuilder()
-                .setToken(Config.C.discordToken)
-                .setGame(Game.watching("you"))
+        DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
+                .createDefault(Config.C.discordToken)
+                .enableIntents(GatewayIntent.GUILD_MEMBERS)
+                .setChunkingFilter(ChunkingFilter.ALL)
+                .setActivity(Activity.watching("you"))
                 .addEventListeners(new RoleChangesListener(wrapperSupplier))
                 .addEventListeners(new CommandsListener(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new EveryoneHereListener(wrapperSupplier))
@@ -90,8 +94,7 @@ public class ShardManagerManager {
                 .addEventListeners(new BanLogs(wrapperSupplier))
                 .addEventListeners(new NahCrossFunctionality())
                 .addEventListeners(new ReactionBanListener(wrapperSupplier))
-                .setEnableShutdownHook(false)
-                .setAudioEnabled(false);
+                .setEnableShutdownHook(false);
         try {
             return shardBuilder.build();
         } catch (Exception e) {

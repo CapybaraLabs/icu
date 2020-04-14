@@ -17,12 +17,12 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.guild.GuildBanEvent;
-import net.dv8tion.jda.core.events.guild.GuildUnbanEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.guild.GuildBanEvent;
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.AuditLogUtil;
@@ -48,17 +48,20 @@ public class BanLogs extends ThreadedListener {
     }
 
 
-    @Override public void onGuildBan(GuildBanEvent event) {
+    @Override
+    public void onGuildBan(GuildBanEvent event) {
         OffsetDateTime now = OffsetDateTime.now();
         getExecutor(event.getGuild()).execute(() -> onBan(event, now));
     }
 
-    @Override public void onGuildUnban(GuildUnbanEvent event) {
+    @Override
+    public void onGuildUnban(GuildUnbanEvent event) {
         OffsetDateTime now = OffsetDateTime.now();
         getExecutor(event.getGuild()).execute(() -> onUnban(event, now));
     }
 
-    @Override public void onGuildMemberLeave(GuildMemberLeaveEvent event) {
+    @Override
+    public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
         OffsetDateTime now = OffsetDateTime.now();
         getExecutor(event.getGuild()).execute(() -> onLeave(event, now));
     }
@@ -94,7 +97,7 @@ public class BanLogs extends ThreadedListener {
 
     private static final String KICK_FORMAT = "User <@%s> (%s) kicked:\n%s";
 
-    private void onLeave(GuildMemberLeaveEvent event, OffsetDateTime eventTime) {
+    private void onLeave(GuildMemberRemoveEvent event, OffsetDateTime eventTime) {
         Guild guild = event.getGuild();
         User user = event.getUser();
         fetchWorkingLogChannel(guild).ifPresent(

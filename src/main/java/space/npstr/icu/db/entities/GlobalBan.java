@@ -17,7 +17,7 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.entities.User;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import space.npstr.sqlsauce.entities.discord.BaseDiscordUser;

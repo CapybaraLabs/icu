@@ -20,8 +20,8 @@ package space.npstr.icu.listeners;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +37,11 @@ public abstract class ThreadedListener extends ListenerAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(ThreadedListener.class);
 
-    private static Thread.UncaughtExceptionHandler exceptionHandler
+    private static final Thread.UncaughtExceptionHandler exceptionHandler
             = (t, e) -> log.error("Exception in thread {}", t.getName(), e);
 
     //to be used for non-guild events
-    protected static ExecutorService DEFAULT_EXEC = provideExecutor(0L);
+    protected static final ExecutorService DEFAULT_EXEC = provideExecutor(0L);
 
     //per guild
     private final LoadingCache<Long, ExecutorService> EXECUTORS = Caffeine.newBuilder()

@@ -17,14 +17,13 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.guild.GuildBanEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.core.requests.RequestFuture;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.guild.GuildBanEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.AuditLogUtil;
@@ -37,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -83,7 +83,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             }
 
             Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(guild);
-            if (!textChannel.isPresent()) {
+            if (textChannel.isEmpty()) {
                 return;
             }
             TextChannel reportingChannel = textChannel.get();
@@ -96,20 +96,20 @@ public class SuspiciousUsersWarner extends ThreadedListener {
 
     private void memberJoined(GuildMemberJoinEvent event) {
         Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(event.getGuild());
-        if (!textChannel.isPresent()) {
+        if (textChannel.isEmpty()) {
             return;
         }
         TextChannel reportingChannel = textChannel.get();
 
-        Map<Guild, RequestFuture<List<Guild.Ban>>> banLists = new HashMap<>();
+        Map<Guild, CompletableFuture<List<Guild.Ban>>> banLists = new HashMap<>();
         shardManagerSupp.get().getGuildCache().forEach(guild -> {
-            if (guild.isAvailable() && guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-                banLists.put(guild, guild.getBanList().submit());
+            if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                banLists.put(guild, guild.retrieveBanList().submit());
             }
         });
 
         Map<Guild, Guild.Ban> userBans = new HashMap<>();
-        for (Map.Entry<Guild, RequestFuture<List<Guild.Ban>>> entry : banLists.entrySet()) {
+        for (Map.Entry<Guild, CompletableFuture<List<Guild.Ban>>> entry : banLists.entrySet()) {
             List<Guild.Ban> bans = new ArrayList<>();
             try {
                 bans.addAll(entry.getValue().get(30, TimeUnit.SECONDS));
@@ -123,7 +123,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         }
 
         StringBuilder out = new StringBuilder();
-        if (event.getUser().getCreationTime().isAfter(OffsetDateTime.now().minusMinutes(MIN_ACCOUNT_AGE_MINUTES))) {//report accounts younger than 30 minutes
+        if (event.getUser().getTimeCreated().isAfter(OffsetDateTime.now().minusMinutes(MIN_ACCOUNT_AGE_MINUTES))) {//report accounts younger than 30 minutes
             out.append("Account younger than ").append(MIN_ACCOUNT_AGE_MINUTES).append(" minutes").append("\n");
         }
         if (!userBans.isEmpty()) {

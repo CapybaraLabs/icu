@@ -17,21 +17,20 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.bot.entities.ApplicationInfo;
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Emote;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.IMentionable;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageReaction;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.core.requests.RequestFuture;
-import net.dv8tion.jda.core.requests.RestAction;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.ApplicationInfo;
+import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.IMentionable;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
@@ -92,20 +91,20 @@ public class CommandsListener extends ThreadedListener {
         if (!event.getMessage().getMentionedUsers().contains(event.getJDA().getSelfUser())) {
             return;
         }
+        Member member = event.getMember();
+        if (member == null) {
+            return;
+        }
+
+        if (!isAdmin(wrapperSupp.get(), member)) {
+            return;
+        }
 
         Guild guild = event.getGuild();
-        if (guild == null) {
-            return;
-        }
-
-        if (!isAdmin(wrapperSupp.get(), event.getMember())) {
-            return;
-        }
-
         Message msg = event.getMessage();
         String content = msg.getContentRaw();
 
-        log.info("Mention received: " + msg.getContentDisplay());
+        log.info("Mention received: {}", msg.getContentDisplay());
 
         if (content.contains("reset everyone")) {
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
@@ -462,7 +461,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
             Role targetRole = mentionedRoles.iterator().next();
-            if (!msg.getMember().canInteract(targetRole)) {
+            if (!member.canInteract(targetRole)) {
                 msg.getChannel().sendMessage("You cannot interact with role " + targetRole.getAsMention()).queue();
                 return;
             }
@@ -473,7 +472,7 @@ public class CommandsListener extends ThreadedListener {
 
             msg.getChannel().sendMessage("Giving user " + targetMember.getAsMention()
                     + " role " + targetRole.getAsMention()).queue();
-            guild.getController().addSingleRoleToMember(targetMember, targetRole).queue(null,
+            guild.addRoleToMember(targetMember, targetRole).queue(null,
                     onFail -> msg.getChannel().sendMessage(msg.getAuthor().getAsMention() + ", could not give "
                             + targetMember.getAsMention() + " role " + targetRole.getAsMention()).queue()
             );
@@ -654,16 +653,16 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("nsa report")) {
             event.getChannel().sendMessage("This may take a while if there are many matches.").queue();
             //populate ban lists of all available servers
-            Map<Guild, RequestFuture<List<Guild.Ban>>> futures = new HashMap<>();
+            Map<Guild, CompletableFuture<List<Guild.Ban>>> futures = new HashMap<>();
             shardManagerSupp.get().getGuildCache().forEach(g -> {
-                if (g.isAvailable() && g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-                    futures.put(g, g.getBanList().submit());
+                if (g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                    futures.put(g, g.retrieveBanList().submit());
                 }
             });
 
             AtomicInteger totalBans = new AtomicInteger(0);
             Map<Guild, List<Guild.Ban>> banLists = new HashMap<>();
-            for (Map.Entry<Guild, RequestFuture<List<Guild.Ban>>> entry : futures.entrySet()) {
+            for (Map.Entry<Guild, CompletableFuture<List<Guild.Ban>>> entry : futures.entrySet()) {
                 List<Guild.Ban> bans = new ArrayList<>();
                 try {
                     bans.addAll(entry.getValue().get(30, TimeUnit.SECONDS));
@@ -676,18 +675,18 @@ public class CommandsListener extends ThreadedListener {
 
             AtomicInteger found = new AtomicInteger(0);
             AtomicInteger checked = new AtomicInteger(0);
-            guild.getMemberCache().forEach(member -> {
+            guild.getMemberCache().forEach(m -> {
                 checked.incrementAndGet();
                 StringBuilder userReport = new StringBuilder();
                 for (Map.Entry<Guild, List<Guild.Ban>> banList : banLists.entrySet()) {
                     Optional<Guild.Ban> ban = banList.getValue().stream()
-                            .filter(b -> b.getUser().equals(member.getUser()))
+                            .filter(b -> b.getUser().equals(m.getUser()))
                             .findAny();
                     ban.ifPresent(b -> userReport.append(banList.getKey().getName()).append(" with reason: ").append(b.getReason()).append("\n"));
                 }
                 if (userReport.length() > 0) {
                     found.incrementAndGet();
-                    String user = "Member " + member.getAsMention() + " (" + member.getUser() + ") is banned in:\n";
+                    String user = "Member " + m.getAsMention() + " (" + m.getUser() + ") is banned in:\n";
                     event.getChannel().sendMessage(user + userReport.toString()).queue();
                 }
             });
@@ -790,11 +789,11 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            List<RequestFuture> futures = new ArrayList<>();
+            List<CompletableFuture<?>> futures = new ArrayList<>();
             AtomicInteger reactionsRemoved = new AtomicInteger(0);
 
             for (TextChannel channel : channels) {
-                RequestFuture<?> iterableFuture = channel.getIterableHistory().forEachAsync(message -> {
+                CompletableFuture<?> iterableFuture = channel.getIterableHistory().forEachAsync(message -> {
                     message.getReactions().forEach(reaction -> {
                         MessageReaction.ReactionEmote reactionEmote = reaction.getReactionEmote();
                         Optional<Function<User, RestAction<Void>>> cleanup = Optional.empty();
@@ -805,10 +804,10 @@ public class CommandsListener extends ThreadedListener {
                         }
 
                         cleanup.ifPresent(action -> {
-                            RequestFuture<List<User>> getUsers = reaction.getUsers().submit();
+                            CompletableFuture<List<User>> getUsers = reaction.retrieveUsers().submit();
                             futures.add(getUsers);
                             getUsers.thenAccept(users -> users.forEach(user -> {
-                                RequestFuture<Void> future = action.apply(user).submit();
+                                CompletableFuture<Void> future = action.apply(user).submit();
                                 futures.add(future);
                                 future.whenComplete((__, t) -> {
                                     log.debug("Deleted reactions of user {} on message {}", user, message);
@@ -827,7 +826,7 @@ public class CommandsListener extends ThreadedListener {
             }
 
             CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS)
-                    .execute(() -> RequestFuture.allOf(futures).whenComplete((__, t) ->
+                    .execute(() -> CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).whenComplete((__, t) ->
                             event.getChannel().sendMessage("Removed a total of " + reactionsRemoved.get() + " reactions!").queue()));
 
         } else if (content.contains("status") || content.contains("config")) {
@@ -963,7 +962,7 @@ public class CommandsListener extends ThreadedListener {
     }
 
     public static boolean isBotOwner(User user) {
-        ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> user.getJDA().asBot().getApplicationInfo().complete());
+        ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> user.getJDA().retrieveApplicationInfo().complete());
         return appInfo != null
                 && appInfo.getOwner().getIdLong() == user.getIdLong();
     }

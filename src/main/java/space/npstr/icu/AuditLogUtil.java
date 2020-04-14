@@ -17,11 +17,11 @@
 
 package space.npstr.icu;
 
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.audit.ActionType;
-import net.dv8tion.jda.core.audit.AuditLogEntry;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.audit.ActionType;
+import net.dv8tion.jda.api.audit.AuditLogEntry;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,18 +64,16 @@ public class AuditLogUtil {
 
     @CheckReturnValue
     private static Optional<String> getReasonFromBanlist(Guild guild, User user) {
-        if (guild.isAvailable()) {
-            if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-                try {
-                    return guild.getBanList().submit().get(30, TimeUnit.SECONDS)
-                            .stream()
-                            .filter(ban -> ban.getUser().getIdLong() == user.getIdLong())
-                            .findAny()
-                            .map(Guild.Ban::getReason);
-                } catch (Exception e) {
-                    log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
-                            user, guild, e);
-                }
+        if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+            try {
+                return guild.retrieveBanList().submit().get(30, TimeUnit.SECONDS)
+                        .stream()
+                        .filter(ban -> ban.getUser().getIdLong() == user.getIdLong())
+                        .findAny()
+                        .map(Guild.Ban::getReason);
+            } catch (Exception e) {
+                log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
+                        user, guild, e);
             }
         }
         return Optional.empty();
@@ -85,19 +83,17 @@ public class AuditLogUtil {
     //returns empty if we are missing the rights to do this
     @CheckReturnValue
     private static Optional<AuditLogEntry> getAuditLogEntry(Guild guild, User user, ActionType actionType, OffsetDateTime eventTime) {
-        if (guild.isAvailable()) {
-            if (guild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
-                try {
-                    return guild.getAuditLogs().type(actionType).submit().get(30, TimeUnit.SECONDS)
-                            .stream()
-                            .filter(entry -> entry.getType() == actionType)
-                            .filter(entry -> entry.getTargetIdLong() == user.getIdLong())
-                            .filter(entry -> isInTimeRange(entry.getCreationTime(), eventTime, TEN_SECONDS))
-                            .findFirst();
-                } catch (Exception e) {
-                    log.error("Failed to get reason for action {} against user {} of guild {} through the audit logs",
-                            actionType, user, guild, e);
-                }
+        if (guild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
+            try {
+                return guild.retrieveAuditLogs().type(actionType).submit().get(30, TimeUnit.SECONDS)
+                        .stream()
+                        .filter(entry -> entry.getType() == actionType)
+                        .filter(entry -> entry.getTargetIdLong() == user.getIdLong())
+                        .filter(entry -> isInTimeRange(entry.getTimeCreated(), eventTime, TEN_SECONDS))
+                        .findFirst();
+            } catch (Exception e) {
+                log.error("Failed to get reason for action {} against user {} of guild {} through the audit logs",
+                        actionType, user, guild, e);
             }
         }
         return Optional.empty();

@@ -17,16 +17,16 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
+import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GuildSettings;
@@ -67,9 +67,9 @@ public class RoleChangesListener extends ThreadedListener {
     }
 
     @Override
-    public void onGuildMemberNickChange(GuildMemberNickChangeEvent event) {
+    public void onGuildMemberUpdateNickname(GuildMemberUpdateNicknameEvent event) {
         getExecutor(event.getGuild()).execute(() -> {
-            log.debug("Nickname set from {} to {} for user {}", event.getPrevNick(), event.getNewNick(), event.getMember());
+            log.debug("Nickname set from {} to {} for user {}", event.getOldNickname(), event.getNewNickname(), event.getMember());
             updateMember(event.getMember());
         });
     }
@@ -85,13 +85,17 @@ public class RoleChangesListener extends ThreadedListener {
     }
 
     @Override
-    public void onGuildMemberLeave(GuildMemberLeaveEvent event) {
+    public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
         //according to Minn, this event reliably contains the roles of a member
         getExecutor(event.getGuild()).execute(() -> {
-            Collection<Role> roles = event.getMember().getRoles();
-            log.debug("User {} left guild {}, with roles: {}", event.getMember(), event.getGuild(), roles.isEmpty() ? "no roles" :
-                    String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
-            updateMember(event.getMember());
+            Member member = event.getMember();
+            if (member == null) {
+                return;
+            }
+            Collection<Role> roles = member.getRoles();
+            log.debug("User {} left guild {}, with roles: {}", member, event.getGuild(), roles.isEmpty() ? "no roles" :
+                    roles.stream().map(Object::toString).collect(Collectors.joining(", ")));
+            updateMember(member);
         });
     }
 
@@ -111,14 +115,14 @@ public class RoleChangesListener extends ThreadedListener {
                     event.getMember(), event.getGuild(), storedNick,
                     roles.isEmpty()
                             ? "no roles"
-                            : String.join(", ", roles.stream().map(Object::toString).collect(Collectors.toList())));
+                            : roles.stream().map(Object::toString).collect(Collectors.joining(", ")));
 
             Member self = event.getGuild().getSelfMember();
             if (storedNick != null && !storedNick.isEmpty()
                     && self.hasPermission(Permission.NICKNAME_MANAGE)
                     && self.canInteract(event.getMember())) {
                 try {
-                    event.getGuild().getController().setNickname(event.getMember(), storedNick).queue();
+                    event.getGuild().modifyNickname(event.getMember(), storedNick).queue();
                 } catch (Exception e) {
                     log.error("Failed to set nickname {} for user {}", storedNick, event.getMember());
                 }
@@ -149,7 +153,7 @@ public class RoleChangesListener extends ThreadedListener {
             // probably wont have many roles, so we can accept the higher ratelimit exhaustion as a trade off for safety
             // of a race condition
             roles.forEach(role ->
-                    event.getGuild().getController().addSingleRoleToMember(event.getMember(), role).queue()
+                    event.getGuild().addRoleToMember(event.getMember(), role).queue()
             );
         });
     }

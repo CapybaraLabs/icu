@@ -17,12 +17,12 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.icu.db.entities.ReactionBan;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
@@ -106,7 +106,7 @@ public class ReactionBanListener extends ListenerAdapter {
         final String theReason = reason;
         user.openPrivateChannel().submit()
                 .thenCompose(pc -> pc.sendMessage(message).submit())
-                .whenComplete((__, ___) -> guild.getController().ban(user, 0, theReason).queue());
+                .whenComplete((__, ___) -> guild.ban(user, 0, theReason).queue());
 
 
         Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(guild);

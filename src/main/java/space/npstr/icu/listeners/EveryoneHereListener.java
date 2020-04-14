@@ -17,11 +17,12 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
@@ -50,15 +51,15 @@ public class EveryoneHereListener extends ThreadedListener {
             return;
         }
 
-        Guild guild = event.getGuild();
-        if (guild == null) {
+        Member member = event.getMember();
+        if (member == null) {
             return;
         }
-
+        Guild guild = event.getGuild();
         GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
 
         //dont troll admins
-        if (CommandsListener.isAdmin(wrapperSupp.get(), event.getMember())) {
+        if (CommandsListener.isAdmin(wrapperSupp.get(), member)) {
             return;
         }
 
@@ -67,24 +68,24 @@ public class EveryoneHereListener extends ThreadedListener {
         Long hereId = guildSettings.getHereRoleId();
         Role hereRole = hereId != null ? guild.getRoleById(hereId) : null;
         if (hereRole != null
-                && (msg.isMentioned(null, Message.MentionType.HERE) || msg.isMentioned(hereRole))
-                && !msg.getMember().getRoles().contains(hereRole)) {
-            addRole(msg, hereRole);
+                && (msg.mentionsEveryone() || msg.isMentioned(hereRole))
+                && !member.getRoles().contains(hereRole)) {
+            addRole(msg, member, hereRole);
         }
 
         Long everyoneId = guildSettings.getEveryoneRoleId();
         Role everyoneRole = everyoneId != null ? guild.getRoleById(everyoneId) : null;
         if (everyoneRole != null
-                && (msg.isMentioned(null, Message.MentionType.EVERYONE) || msg.isMentioned(everyoneRole))
-                && !msg.getMember().getRoles().contains(everyoneRole)) {
-            addRole(msg, everyoneRole);
+                && (msg.mentionsEveryone() || msg.isMentioned(everyoneRole))
+                && !member.getRoles().contains(everyoneRole)) {
+            addRole(msg, member, everyoneRole);
         }
     }
 
     //msg needs to be from a guild
-    private void addRole(Message msg, Role role) {
+    private void addRole(Message msg, Member member, Role role) {
         if (role.getGuild().getSelfMember().canInteract(role)) {
-            role.getGuild().getController().addSingleRoleToMember(msg.getMember(), role).queue(__ -> {
+            role.getGuild().addRoleToMember(member, role).queue(__ -> {
                 if (role.getGuild().getSelfMember().hasPermission(msg.getTextChannel(), Permission.MESSAGE_ADD_REACTION)) {
                     msg.addReaction("👌").queue();
                     msg.addReaction("👌🏻").queue();

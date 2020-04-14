@@ -17,12 +17,11 @@
 
 package space.npstr.icu;
 
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.ISnowflake;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.requests.RequestFuture;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GlobalBan;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -98,7 +98,7 @@ public class GlobalBanSync {
         }
 
 
-        Set<Long> guildBanList = guild.getBanList().submit().get(30, TimeUnit.SECONDS)
+        Set<Long> guildBanList = guild.retrieveBanList().submit().get(30, TimeUnit.SECONDS)
                 .stream()
                 .map(Guild.Ban::getUser)
                 .map(ISnowflake::getIdLong)
@@ -113,17 +113,17 @@ public class GlobalBanSync {
         }
 
 
-        List<RequestFuture> futures = new ArrayList<>();
+        List<CompletableFuture<?>> futures = new ArrayList<>();
         for (GlobalBan ban : toBan) {
             String reason = "[i.c.u. Global Ban List] " + ban.getReason();
             if (reason.length() >= 512) { //max audit log size
                 reason = reason.substring(0, 512);
             }
 
-            futures.add(guild.getController().ban(Long.toString(ban.getUserId()), 1, reason).submit());
+            futures.add(guild.ban(Long.toString(ban.getUserId()), 1, reason).submit());
         }
 
         //wait to be done before moving on
-        RequestFuture.allOf(futures);
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{}));
     }
 }

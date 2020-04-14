@@ -17,11 +17,11 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.bot.sharding.ShardManager;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.db.entities.GuildSettings;
@@ -77,10 +77,6 @@ public class MemberRoleManager extends ThreadedListener {
 
     private void guildMemberJoin(GuildMemberJoinEvent event) {
         Guild guild = event.getGuild();
-        if (guild == null) {
-            return;
-        }
-
         assignMemberRole(guild, Stream.of(event.getMember()));
     }
 
@@ -109,12 +105,12 @@ public class MemberRoleManager extends ThreadedListener {
                 if (guild.getVerificationLevel().getKey() >= Guild.VerificationLevel.HIGH.getKey()) {
                     //only assign to users that are at least 10 minutes in the guild, otherwise it circumvents
                     //the message sending restrictions of the HIGH verification level (users with a role can send messages)
-                    if (member.getJoinDate().isAfter(OffsetDateTime.now().minusMinutes(10))) {
+                    if (member.getTimeJoined().isAfter(OffsetDateTime.now().minusMinutes(10))) {
                         return;
                     }
                 }
 
-                guild.getController().addSingleRoleToMember(member, memberRole).queue();
+                guild.addRoleToMember(member, memberRole).queue();
             } catch (Exception e) {
                 log.error("Could not assign member role to user {}", member, e);
             }

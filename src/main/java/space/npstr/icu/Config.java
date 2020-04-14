@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -62,7 +63,7 @@ public class Config {
 
         final File sneakyFile = new File("sneaky.yaml");
         final Yaml yaml = new Yaml();
-        try (Reader reader = new InputStreamReader(new FileInputStream(sneakyFile), "UTF-8")) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(sneakyFile), StandardCharsets.UTF_8)) {
             final Map<String, Object> sneaky = yaml.load(reader);
             //change nulls to empty strings
             sneaky.keySet().forEach((String key) -> sneaky.putIfAbsent(key, ""));
