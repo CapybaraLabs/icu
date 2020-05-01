@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.listeners.BanLogs;
@@ -84,6 +85,7 @@ public class ShardManagerManager {
         DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
                 .createDefault(Config.C.discordToken)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .setChunkingFilter(ChunkingFilter.ALL)
                 .setActivity(Activity.watching("you"))
                 .addEventListeners(new RoleChangesListener(wrapperSupplier))
