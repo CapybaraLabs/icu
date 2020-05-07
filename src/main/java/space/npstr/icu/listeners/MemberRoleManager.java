@@ -17,22 +17,23 @@
 
 package space.npstr.icu.listeners;
 
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.api.sharding.ShardManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
-
 import java.time.OffsetDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 13.02.18.
@@ -110,7 +111,19 @@ public class MemberRoleManager extends ThreadedListener {
                     }
                 }
 
-                guild.addRoleToMember(member, memberRole).queue();
+                guild.addRoleToMember(member, memberRole).queue(null, throwable -> {
+                    if (throwable instanceof ErrorResponseException) {
+                        ErrorResponseException errorResponseException = (ErrorResponseException) throwable;
+                        if (errorResponseException.getErrorResponse() == ErrorResponse.UNKNOWN_MEMBER) {
+                            // workaround for eventual consistency / a possible bug happening since the new
+                            // intent system is in use.
+                            log.warn("Unloading member {}", member);
+                            guild.unloadMember(member.getUser().getIdLong());
+                            return;
+                        }
+                    }
+                    log.error("Could not assign member role to user {}", member, throwable);
+                });
             } catch (Exception e) {
                 log.error("Could not assign member role to user {}", member, e);
             }
