@@ -61,6 +61,7 @@ import java.util.stream.Stream;
  * <p>
  * yeah this is ugly af without any command / context framework
  */
+@SuppressWarnings("DuplicatedCode")
 public class CommandsListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(CommandsListener.class);
@@ -410,7 +411,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
@@ -576,7 +576,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
@@ -635,7 +634,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
