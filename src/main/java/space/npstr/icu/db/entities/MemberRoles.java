@@ -17,18 +17,12 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import org.hibernate.annotations.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import space.npstr.sqlsauce.entities.MemberComposite;
-import space.npstr.sqlsauce.entities.SaucedEntity;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-import space.npstr.sqlsauce.hibernate.types.BasicType;
-
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 import javax.persistence.Cacheable;
@@ -36,12 +30,18 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
+import org.hibernate.annotations.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import space.npstr.sqlsauce.entities.MemberComposite;
+import space.npstr.sqlsauce.entities.SaucedEntity;
+import space.npstr.sqlsauce.fp.types.EntityKey;
+import space.npstr.sqlsauce.hibernate.types.BasicType;
 
 /**
  * Created by napster on 27.12.17.
@@ -72,6 +72,10 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
 
     public static EntityKey<MemberComposite, MemberRoles> key(Member member) {
         return EntityKey.of(new MemberComposite(member), MemberRoles.class);
+    }
+
+    public static EntityKey<MemberComposite, MemberRoles> key(Guild guild, User user) {
+        return EntityKey.of(new MemberComposite(guild, user), MemberRoles.class);
     }
 
     @Override
