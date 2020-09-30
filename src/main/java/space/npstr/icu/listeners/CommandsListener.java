@@ -17,6 +17,22 @@
 
 package space.npstr.icu.listeners;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Emote;
@@ -36,31 +52,16 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.icu.db.entities.MemberRoles;
 import space.npstr.icu.db.entities.ReactionBan;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by napster on 25.01.18.
  * <p>
  * yeah this is ugly af without any command / context framework
  */
+@SuppressWarnings("DuplicatedCode")
 public class CommandsListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(CommandsListener.class);
@@ -410,7 +411,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
@@ -576,7 +576,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
@@ -635,7 +634,6 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
             }
-            //noinspection Duplicates
             if (mentionedUsers.size() > 1) {
                 String out = "You specified several users. Which one of these did you mean?\n";
                 out += String.join("\n", mentionedUsers.stream()
@@ -826,9 +824,31 @@ public class CommandsListener extends ThreadedListener {
             }
 
             CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS)
-                    .execute(() -> CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).whenComplete((__, t) ->
-                            event.getChannel().sendMessage("Removed a total of " + reactionsRemoved.get() + " reactions!").queue()));
+                .execute(() -> CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).whenComplete((__, t) ->
+                    event.getChannel().sendMessage("Removed a total of " + reactionsRemoved.get() + " reactions!").queue()));
 
+        } else if (content.contains("forget roles")) {
+            String adjustedContent = content.replace("forget roles", "");
+            //identify user
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            if (mentionedUsers.isEmpty()) {
+                event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
+                return;
+            }
+            if (mentionedUsers.size() > 1) {
+                String out = "You specified several users. Which one of these did you mean? Use their id please.\n";
+                out += String.join("\n", mentionedUsers.stream()
+                    .map(user -> user.getAsMention() + " id(" + user.getId() + ")" + user.getName())
+                    .collect(Collectors.toSet()));
+                event.getChannel().sendMessage(out).queue();
+                return;
+            }
+            User targetUser = mentionedUsers.iterator().next();
+
+            wrapperSupp.get().findApplyAndMerge(MemberRoles.key(guild, targetUser),
+                memberRoles -> memberRoles.setRoleIds(List.of())
+            );
+            event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("status") || content.contains("config")) {
             String output = "";
             GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
@@ -955,6 +975,7 @@ public class CommandsListener extends ThreadedListener {
             output += "`#channel :custom_emote: add reaction ban :emoji:`\n\t\tAdd a reaction ban for a channel and emote.\n";
             output += "`#channel :custom_emote: ... remove reaction ban :emoji:`\n\t\tRemove a reaction ban.\n";
             output += "`list reaction bans`\n\t\tShow all reaction bans set up for channels of this guild.\n";
+            output += "`forget roles userId`\n\t\tForget the roles saved for a user in the database.\n";
             output += "`status` or `config`\n\t\tShow current configuration.\n";
             output += "`help` or `commands`\n\t\tShow this command help.\n";
             event.getChannel().sendMessage(output).queue();
