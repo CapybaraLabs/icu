@@ -20,7 +20,6 @@ repositories {
     jcenter()                               // JDA, maybe others
     mavenCentral()                          // everything else
     maven { url 'https://dl.bintray.com/napster/SqlSauce' }
-    mavenLocal()                            // local maven repo, mostly for testing stuff
     maven { url 'https://jitpack.io' }      // for getting builds from github
 }
 
