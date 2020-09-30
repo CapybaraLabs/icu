@@ -18,11 +18,6 @@
 package space.npstr.icu;
 
 import io.sentry.Sentry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
-import space.npstr.icu.info.GitRepoState;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +25,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
+import space.npstr.icu.info.GitRepoState;
 
 /**
  * Created by napster on 09.09.17.
@@ -81,7 +80,10 @@ public class Config {
 
             this.sentryDsn = (String) sneaky.getOrDefault("sentryDsn", "");
             if (this.sentryDsn != null && !this.sentryDsn.isEmpty()) {
-                Sentry.init(this.sentryDsn).setRelease(GitRepoState.getGitRepositoryState().commitId);
+                Sentry.init(options -> {
+                    options.setDsn(this.sentryDsn);
+                    options.setRelease(GitRepoState.getGitRepositoryState().commitId);
+                });
             }
 
             this.nahEnhancement = (boolean) sneaky.getOrDefault("nahEnhancement", false);
