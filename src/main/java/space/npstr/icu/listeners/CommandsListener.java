@@ -963,6 +963,8 @@ public class CommandsListener extends ThreadedListener {
             output += "`remove admin @role or @member or id`\n\t\tRemove admins for this guild.\n";
             output += "`add ignored @role or id`\n\t\tAdd ignored role for this guild.\n";
             output += "`remove ignored @role or id`\n\t\tRemove ignored role for this guild.\n";
+            event.getChannel().sendMessage(output).queue();
+            output = "";
             output += "`add role [@user | userId | userName | userNickname] [@role | roleId | roleName]`\n\t\tAdd a role to a user\n";
             output += "`list roles`\n\t\tList available roles in this guild with ids.\n";
             output += "`enable global bans`\n\t\tEnable global ban list curated by the bot owner.\n";
