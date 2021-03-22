@@ -1,5 +1,7 @@
 <img align="right" src="https://i.imgur.com/YqyuKXT.png" height="200" width="200">
 
+# i.c.u. [![Build](https://github.com/napstr/icu/actions/workflows/build.yaml/badge.svg)](https://github.com/napstr/icu/actions/workflows/build.yaml)
+
 A super simple Discord bot, originally created to preserve a users roles when they leave the server and rejoin.
 
 It is currently in heavy use, loved and hated, on several big (read: a few thousand, up to 100k users) Discord servers.
