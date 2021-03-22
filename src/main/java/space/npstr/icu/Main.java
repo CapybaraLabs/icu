@@ -20,6 +20,7 @@ package space.npstr.icu;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import java.util.concurrent.CompletionException;
 import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -123,6 +124,15 @@ public class Main {
 
     public static String asTimeInCentralEurope(final long epochMillis) {
         return TIME_IN_CENTRAL_EUROPE.format(Instant.ofEpochMilli(epochMillis));
+    }
+
+    //unwrap completion exceptions
+    public static Throwable unwrap(Throwable throwable) {
+        Throwable realCause = throwable;
+        while ((realCause instanceof CompletionException) && realCause.getCause() != null) {
+            realCause = realCause.getCause();
+        }
+        return realCause;
     }
 
     private static String getVersionInfo() {

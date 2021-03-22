@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.npstr.icu.AuditLogUtil;
+import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
@@ -115,9 +116,10 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             try {
                 bans.add(entry.getValue().join());
             } catch (Exception e) {
-                if (!(e instanceof ErrorResponseException)
-                        || ((ErrorResponseException) e).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
-                    log.error("Failed to fetch ban list for guild {}", entry.getKey(), e);
+                Throwable realCause = Main.unwrap(e);
+                if (!(realCause instanceof ErrorResponseException)
+                        || ((ErrorResponseException) realCause).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
+                    log.error("Failed to fetch ban list for guild {}", entry.getKey(), realCause);
                 }
             }
             Optional<Guild.Ban> ban = bans.stream()
