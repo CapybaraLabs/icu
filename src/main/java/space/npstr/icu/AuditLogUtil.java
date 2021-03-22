@@ -22,6 +22,8 @@ import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,14 +68,13 @@ public class AuditLogUtil {
     private static Optional<String> getReasonFromBanlist(Guild guild, User user) {
         if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             try {
-                return guild.retrieveBanList().submit().get(5, TimeUnit.MINUTES)
-                        .stream()
-                        .filter(ban -> ban.getUser().getIdLong() == user.getIdLong())
-                        .findAny()
-                        .map(Guild.Ban::getReason);
+                return Optional.ofNullable(guild.retrieveBan(user).submit().join().getReason());
             } catch (Exception e) {
-                log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
+                if (!(e instanceof ErrorResponseException)
+                        || ((ErrorResponseException) e).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
+                    log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",
                         user, guild, e);
+                }
             }
         }
         return Optional.empty();

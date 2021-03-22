@@ -663,7 +663,7 @@ public class CommandsListener extends ThreadedListener {
             for (Map.Entry<Guild, CompletableFuture<List<Guild.Ban>>> entry : futures.entrySet()) {
                 List<Guild.Ban> bans = new ArrayList<>();
                 try {
-                    bans.addAll(entry.getValue().get(30, TimeUnit.SECONDS));
+                    bans.addAll(entry.getValue().get(5, TimeUnit.MINUTES));
                     totalBans.addAndGet(bans.size());
                 } catch (Exception e) {
                     log.error("Failed to fetch ban list for guild {}", entry.getKey(), e);

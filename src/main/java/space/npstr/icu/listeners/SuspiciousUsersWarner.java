@@ -23,6 +23,8 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -101,20 +102,23 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         }
         TextChannel reportingChannel = textChannel.get();
 
-        Map<Guild, CompletableFuture<List<Guild.Ban>>> banLists = new HashMap<>();
+        Map<Guild, CompletableFuture<Guild.Ban>> banLists = new HashMap<>();
         shardManagerSupp.get().getGuildCache().forEach(guild -> {
             if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
-                banLists.put(guild, guild.retrieveBanList().submit());
+                banLists.put(guild, guild.retrieveBan(event.getUser()).submit());
             }
         });
 
         Map<Guild, Guild.Ban> userBans = new HashMap<>();
-        for (Map.Entry<Guild, CompletableFuture<List<Guild.Ban>>> entry : banLists.entrySet()) {
+        for (Map.Entry<Guild, CompletableFuture<Guild.Ban>> entry : banLists.entrySet()) {
             List<Guild.Ban> bans = new ArrayList<>();
             try {
-                bans.addAll(entry.getValue().get(30, TimeUnit.SECONDS));
+                bans.add(entry.getValue().join());
             } catch (Exception e) {
-                log.error("Failed to fetch ban list for guild {}", entry.getKey(), e);
+                if (!(e instanceof ErrorResponseException)
+                        || ((ErrorResponseException) e).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
+                    log.error("Failed to fetch ban list for guild {}", entry.getKey(), e);
+                }
             }
             Optional<Guild.Ban> ban = bans.stream()
                     .filter(b -> b.getUser().equals(event.getUser()))
