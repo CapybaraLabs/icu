@@ -66,7 +66,7 @@ public class AuditLogUtil {
     private static Optional<String> getReasonFromBanlist(Guild guild, User user) {
         if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             try {
-                return guild.retrieveBanList().submit().get(30, TimeUnit.SECONDS)
+                return guild.retrieveBanList().submit().get(5, TimeUnit.MINUTES)
                         .stream()
                         .filter(ban -> ban.getUser().getIdLong() == user.getIdLong())
                         .findAny()
@@ -85,7 +85,7 @@ public class AuditLogUtil {
     private static Optional<AuditLogEntry> getAuditLogEntry(Guild guild, User user, ActionType actionType, OffsetDateTime eventTime) {
         if (guild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
             try {
-                return guild.retrieveAuditLogs().type(actionType).submit().get(30, TimeUnit.SECONDS)
+                return guild.retrieveAuditLogs().type(actionType).submit().get(5, TimeUnit.MINUTES)
                         .stream()
                         .filter(entry -> entry.getType() == actionType)
                         .filter(entry -> entry.getTargetIdLong() == user.getIdLong())

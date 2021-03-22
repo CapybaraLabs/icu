@@ -73,7 +73,7 @@ public class GlobalBanSync {
             } catch (Exception e) {
                 log.error("Failed to sync global bans", e);
             }
-        }, 1, 1, TimeUnit.MINUTES);
+        }, 1, 10, TimeUnit.MINUTES);
     }
 
     private void syncGlobalBans(Guild guild, List<GlobalBan> globalBans)
@@ -98,7 +98,7 @@ public class GlobalBanSync {
         }
 
 
-        Set<Long> guildBanList = guild.retrieveBanList().submit().get(30, TimeUnit.SECONDS)
+        Set<Long> guildBanList = guild.retrieveBanList().submit().get(5, TimeUnit.MINUTES)
                 .stream()
                 .map(Guild.Ban::getUser)
                 .map(ISnowflake::getIdLong)
