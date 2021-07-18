@@ -3,9 +3,9 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id 'java'
     id 'application'
-    id 'com.gorylenko.gradle-git-properties' version '2.2.4'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id 'com.github.ben-manes.versions' version '0.38.0'
+    id 'com.gorylenko.gradle-git-properties' version '2.3.1'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.ben-manes.versions' version '0.39.0'
 }
 
 
@@ -17,7 +17,11 @@ mainClassName = 'space.npstr.icu.Main'
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
-    jcenter()                               // JDA, maybe others
+    maven {
+        url 'https://m2.dv8tion.net/releases'
+        content { includeModule("net.dv8tion", "JDA") }
+        content { includeGroup("club.minnced") }
+    }
     mavenCentral()                          // everything else
     maven { url 'https://dl.bintray.com/napster/SqlSauce' }
     maven { url 'https://jitpack.io' }      // for getting builds from github
@@ -27,9 +31,9 @@ repositories {
 dependencies {
     //@formatter:off
     ext {
-        jdaVersion              = '[4.1.2_191, 4.3['
+        jdaVersion              = '[4.3.0_297, 4.4['
         logbackVersion          = '[1.2.3, 2.0['
-        sentryVersion           = '[4.3.0, 5.0['
+        sentryVersion           = '[5.0.1, 6.0['
         okhttpVersion           = '[3.14.1, 4.0['
         yamlVersion             = '[1.24, 2.0['
         sqlsauceVersion         = '[0.4.3, 0.5['
