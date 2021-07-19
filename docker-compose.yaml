@@ -18,7 +18,7 @@ services:
       - ./logs/gc:/opt/icu/logs/gc
     entrypoint:
       - java
-      - -Xmx256m
+      - -Xmx1024m
       - -XX:+HeapDumpOnOutOfMemoryError
       - -XX:HeapDumpPath=emergencydump.hprof
       - -Xlog:gc*:logs/gc/gc-%t.log::filesize=1048576   #1gb
