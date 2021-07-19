@@ -73,7 +73,7 @@ public class Config {
             String jdbc = (String) sneaky.getOrDefault("jdbcUrl", "");
             if (jdbc == null || jdbc.isEmpty()) {
                 log.info("No jdbc url configured, using default docker one");
-                jdbcUrl = "jdbc:postgresql://db:5432/icu?user=icu";
+                jdbcUrl = "jdbc:postgresql://db:5432/icu?user=icu&password=icu";
             } else {
                 jdbcUrl = jdbc;
             }

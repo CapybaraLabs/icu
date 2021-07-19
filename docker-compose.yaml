@@ -2,10 +2,17 @@ version: '3.6'
 services:
 
   db:
-    image: napstr/icu-postgres:11
+    image: napstr/poggres:12
     restart: always
     volumes:
-      - ./postgres-data/11/data:/var/lib/postgresql/data
+      - ./postgres-data/12/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=icu
+      # See https://github.com/napstr/poggres#env-vars
+      - ROLE=icu
+      - PASSWORD=icu
+      - DB=icu
+      - EXTENSIONS=hstore
 
   bot:
     image: napstr/icu:master
