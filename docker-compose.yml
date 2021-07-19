@@ -5,7 +5,7 @@ services:
     image: napstr/icu-postgres:10
     restart: always
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data/10/data:/var/lib/postgresql/data
 
   bot:
     image: napstr/icu:master
