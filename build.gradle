@@ -4,7 +4,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.gorylenko.gradle-git-properties' version '2.3.1'
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
     id 'com.github.ben-manes.versions' version '0.39.0'
 }
 
@@ -102,19 +102,15 @@ task resolveAndLockAll {
     }
 }
 
-dependencyUpdates.resolutionStrategy {
-    componentSelection properReleasesOnly()
+// https://github.com/ben-manes/gradle-versions-plugin
+tasks.named("dependencyUpdates").configure {
+  rejectVersionIf {
+    isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
+  }
 }
 
-static def properReleasesOnly() {
-    return { rules ->
-        rules.all { ComponentSelection selection ->
-            boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3'].any {
-                q -> selection.candidate.version.toLowerCase().contains(q)
-            }
-            if (rejected) {
-                selection.reject('Release candidate')
-            }
-        }
-    }
+def isNonStable = { String version ->
+  def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+  def regex = /^[0-9,.v-]+(-r)?$/
+  return !stableKeyword && !(version ==~ regex)
 }
