@@ -9,7 +9,7 @@ buildscript {
         shadowVersion           = '7.+'
         versionsVersion         = '0.+'
 
-        jdaVersion              = '[4.3.0_297, 4.4['
+        jdaVersion              = '[4.4.0_351, 4.5['
         logbackVersion          = '[1.2.3, 2.0['
         sentryVersion           = '[5.0.1, 6.0['
         okhttpVersion           = '[3.14.1, 4.0['
