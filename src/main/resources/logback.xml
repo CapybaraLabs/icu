@@ -59,13 +59,6 @@
         </encoder>
     </appender>
 
-    <!-- Send logs with the provided level or higher to sentry -->
-    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-    </appender>
-
     <!-- Gives us a nice JDA log with only JDA output -->
     <appender name="JDA" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/jda.log</file>
@@ -87,7 +80,6 @@
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="INFOFILE"/>
         <appender-ref ref="ERRORFILE"/>
-        <appender-ref ref="SENTRY"/>
     </logger>
 
 
@@ -115,6 +107,5 @@
         <appender-ref ref="INFOFILE"/>
         <appender-ref ref="ERRORFILE"/>
         <appender-ref ref="DEBUGFILE"/>
-        <appender-ref ref="SENTRY"/>
     </root>
 </configuration>
