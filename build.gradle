@@ -59,7 +59,6 @@ repositories {
         content { includeGroup("club.minnced") }
     }
     mavenCentral()                          // everything else
-    maven { url 'https://dl.bintray.com/napster/SqlSauce' }
     maven { url 'https://jitpack.io' }      // for getting builds from github
 }
 
