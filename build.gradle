@@ -50,7 +50,12 @@ version '0.1.0-SNAPSHOT'
 
 mainClassName = 'space.npstr.icu.Main'
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+        vendor = JvmVendorSpec.ADOPTOPENJDK
+    }
+}
 
 repositories {
     maven {
