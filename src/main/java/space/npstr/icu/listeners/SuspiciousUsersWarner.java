@@ -89,8 +89,8 @@ public class SuspiciousUsersWarner extends ThreadedListener {
                 return;
             }
             TextChannel reportingChannel = textChannel.get();
-            String messsage = "User " + bannedUser.getAsMention() + " (" + bannedUser + "):\n";
-            messsage += "Banned in " + bannedGuild.getName() + " with reason: " + reason;
+            String messsage = "Member " + bannedUser.getAsMention() + " (" + bannedUser + "):\n";
+            messsage += "Banned just now in " + bannedGuild.getName() + " with reason: " + reason;
 
             reportingChannel.sendMessage(messsage).queue();
         });
@@ -141,8 +141,8 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         }
 
         if (out.length() > 0) {
-            String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + "):\n";
-            reportingChannel.sendMessage(user + out.toString()).queue();
+            String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + ") joined this server:\n";
+            reportingChannel.sendMessage(user + out).queue();
         }
     }
 }
