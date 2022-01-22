@@ -1,49 +1,19 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-    ext {
-        //@formatter:off
-
-        //plugin versions
-        gradleGitVersion        = '2.+'
-        shadowVersion           = '7.+'
-        versionsVersion         = '0.+'
-
-        jdaVersion              = '[4.4.0_351, 4.5['
-        logbackVersion          = '[1.2.3, 2.0['
-        sentryVersion           = '[5.0.1, 6.0['
-        okhttpVersion           = '[3.14.1, 4.0['
-        yamlVersion             = '[1.24, 2.0['
-        sqlsauceVersion         = '[0.4.3, 0.5['
-        hibernateVersion        = '5.4.27.Final'
-        annotationsVersion      = '[0.0.1, 0.1['
-        jaxbApiVersion          = '[2.3.1, 3.0['
-        caffeineVersion         = '[3.0.1, 4.0['
-        dsProxyVersion          = '[1.5.1, 2.0['
-
-        //@formatter:on
-    }
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:${gradleGitVersion}"
-        classpath "gradle.plugin.com.github.johnrengelman:shadow:${shadowVersion}"
-        classpath "com.github.ben-manes:gradle-versions-plugin:${versionsVersion}"
-    }
 
     configurations.classpath {
         resolutionStrategy.activateDependencyLocking()
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'application'
-apply plugin: 'com.gorylenko.gradle-git-properties'
-apply plugin: "com.github.johnrengelman.shadow"
-apply plugin: 'com.github.ben-manes.versions'
-
+plugins {
+    id 'java'
+    id 'application'
+    alias(libs.plugins.gitprops)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.versions)
+}
 
 group 'space.npstr.icu'
 version '0.1.0-SNAPSHOT'
@@ -71,18 +41,18 @@ repositories {
 dependencies {
     //@formatter:off
 
-    implementation "net.dv8tion:JDA:$jdaVersion"
-    implementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation "io.sentry:sentry-logback:$sentryVersion"
-    implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
-    implementation "org.yaml:snakeyaml:$yamlVersion"
-    implementation "space.npstr.SqlSauce:sqlsauce-core:$sqlsauceVersion"
-    implementation "space.npstr.SqlSauce:discord-entities:$sqlsauceVersion"
-    implementation "org.hibernate:hibernate-jcache:$hibernateVersion"
-    implementation "com.github.ben-manes.caffeine:jcache:$caffeineVersion"
-    implementation "space.npstr:annotations:$annotationsVersion"
-    implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
-    implementation "net.ttddyy:datasource-proxy:$dsProxyVersion"
+    implementation libs.jda
+    implementation libs.logback
+    implementation libs.sentry
+    implementation libs.okhttp
+    implementation libs.yaml
+    implementation libs.sqlsauce.core
+    implementation libs.sqlsauce.discord
+    implementation libs.hibernate.jcache
+    implementation libs.caffeine.jcache
+    implementation libs.annotations
+    implementation libs.jaxb
+    implementation libs.dsproxy
 
     //@formatter:on
 }
