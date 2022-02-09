@@ -23,7 +23,7 @@ mainClassName = 'space.npstr.icu.Main'
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
-        vendor = JvmVendorSpec.ADOPTOPENJDK
+        vendor = JvmVendorSpec.ADOPTIUM
     }
 }
 
@@ -107,7 +107,7 @@ dependencyUpdates.resolutionStrategy {
 static def properReleasesOnly() {
     return { rules ->
         rules.all { ComponentSelection selection ->
-            boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3'].any {
+            boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3', 'cr1'].any {
                 q -> selection.candidate.version.toLowerCase().contains(q)
             }
             if (rejected) {

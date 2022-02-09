@@ -5,16 +5,13 @@ pluginManagement {
 	}
 }
 
-
-enableFeaturePreview('VERSION_CATALOGS')
-
 rootProject.name = 'icu'
 
 ext {
 	//@formatter:off
 
 	//plugin versions
-	gradleGitVersion        = '[2.3.2, 2.4['
+	gradleGitVersion        = '[2.4.0, 3.0['
 	shadowVersion           = '7.+'
 	versionsVersion         = '0.+'
 
@@ -39,22 +36,22 @@ dependencyResolutionManagement {
 		libs {
 			version("sqlsauce", "$sqlsauceVersion")
 
-			alias("gitprops").toPluginId("com.gorylenko.gradle-git-properties").version("$gradleGitVersion")
-			alias("shadow").toPluginId("com.github.johnrengelman.shadow").version("$shadowVersion")
-			alias("versions").toPluginId("com.github.ben-manes.versions").version("$versionsVersion")
+			plugin("gitprops", "com.gorylenko.gradle-git-properties").version("$gradleGitVersion")
+			plugin("shadow", "com.github.johnrengelman.shadow").version("$shadowVersion")
+			plugin("versions", "com.github.ben-manes.versions").version("$versionsVersion")
 
-			alias("jda").to("net.dv8tion:JDA:$jdaVersion")
-			alias("logback").to("ch.qos.logback:logback-classic:$logbackVersion")
-			alias("sentry").to("io.sentry:sentry-logback:$sentryVersion")
-			alias("okhttp").to("com.squareup.okhttp3:okhttp:$okhttpVersion")
-			alias("yaml").to("org.yaml:snakeyaml:$yamlVersion")
-			alias("sqlsauce-core").to("space.npstr.SqlSauce", "sqlsauce-core").versionRef("sqlsauce")
-			alias("sqlsauce-discord").to("space.npstr.SqlSauce", "discord-entities").versionRef("sqlsauce")
-			alias("hibernate-jcache").to("org.hibernate:hibernate-jcache:$hibernateVersion")
-			alias("caffeine-jcache").to("com.github.ben-manes.caffeine:jcache:$caffeineVersion")
-			alias("annotations").to("space.npstr:annotations:$annotationsVersion")
-			alias("jaxb").to("javax.xml.bind:jaxb-api:$jaxbApiVersion")
-			alias("dsproxy").to("net.ttddyy:datasource-proxy:$dsProxyVersion")
+			library("jda", "net.dv8tion:JDA:$jdaVersion")
+			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
+			library("sentry", "io.sentry:sentry-logback:$sentryVersion")
+			library("okhttp", "com.squareup.okhttp3:okhttp:$okhttpVersion")
+			library("yaml", "org.yaml:snakeyaml:$yamlVersion")
+			library("sqlsauce-core", "space.npstr.SqlSauce", "sqlsauce-core").versionRef("sqlsauce")
+			library("sqlsauce-discord", "space.npstr.SqlSauce", "discord-entities").versionRef("sqlsauce")
+			library("hibernate-jcache", "org.hibernate:hibernate-jcache:$hibernateVersion")
+			library("caffeine-jcache", "com.github.ben-manes.caffeine:jcache:$caffeineVersion")
+			library("annotations", "space.npstr:annotations:$annotationsVersion")
+			library("jaxb", "javax.xml.bind:jaxb-api:$jaxbApiVersion")
+			library("dsproxy", "net.ttddyy:datasource-proxy:$dsProxyVersion")
 		}
 	}
 }
