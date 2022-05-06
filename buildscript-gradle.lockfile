@@ -4,8 +4,8 @@
 com.github.ben-manes.versions:com.github.ben-manes.versions.gradle.plugin:0.42.0=classpath
 com.github.ben-manes:gradle-versions-plugin:0.42.0=classpath
 com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:7.1.2=classpath
-com.gorylenko.gradle-git-properties:com.gorylenko.gradle-git-properties.gradle.plugin:2.4.0=classpath
-com.gorylenko.gradle-git-properties:gradle-git-properties:2.4.0=classpath
+com.gorylenko.gradle-git-properties:com.gorylenko.gradle-git-properties.gradle.plugin:2.4.1=classpath
+com.gorylenko.gradle-git-properties:gradle-git-properties:2.4.1=classpath
 com.thoughtworks.xstream:xstream:1.4.17=classpath
 commons-io:commons-io:2.11.0=classpath
 gradle.plugin.com.github.johnrengelman:shadow:7.1.2=classpath
