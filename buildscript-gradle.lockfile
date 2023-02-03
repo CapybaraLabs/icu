@@ -1,8 +1,8 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-com.github.ben-manes.versions:com.github.ben-manes.versions.gradle.plugin:0.44.0=classpath
-com.github.ben-manes:gradle-versions-plugin:0.44.0=classpath
+com.github.ben-manes.versions:com.github.ben-manes.versions.gradle.plugin:0.45.0=classpath
+com.github.ben-manes:gradle-versions-plugin:0.45.0=classpath
 com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:7.1.2=classpath
 com.gorylenko.gradle-git-properties:com.gorylenko.gradle-git-properties.gradle.plugin:2.4.1=classpath
 com.gorylenko.gradle-git-properties:gradle-git-properties:2.4.1=classpath
