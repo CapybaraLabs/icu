@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Dennis Neufeld
+ * Copyright (C) 2018 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -81,8 +81,8 @@ public class ShardManagerManager {
     private static ShardManager initShardManager(Supplier<DatabaseWrapper> wrapperSupplier,
                                                  Supplier<ShardManager> shardManagerSupplier) {
         DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
-                .createDefault(Config.C.discordToken)
-                .enableIntents(GatewayIntent.GUILD_MEMBERS)
+            .createDefault(Config.C.discordToken)
+            .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .setChunkingFilter(ChunkingFilter.ALL)
                 .setActivity(Activity.watching("you"))

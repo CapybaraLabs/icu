@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2019 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,20 +17,20 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.entities.Emote;
-import net.dv8tion.jda.api.entities.MessageReaction;
-import net.dv8tion.jda.api.entities.TextChannel;
-import space.npstr.sqlsauce.entities.SaucedEntity;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-
+import java.io.Serializable;
+import java.util.Objects;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.io.Serializable;
-import java.util.Objects;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
+import space.npstr.sqlsauce.entities.SaucedEntity;
+import space.npstr.sqlsauce.fp.types.EntityKey;
 
 /**
  * Created by napster on 01.05.19.
@@ -48,15 +48,18 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
     ReactionBan() {
     }
 
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(TextChannel channel, MessageReaction.ReactionEmote emote) {
-        return EntityKey.of(new ChannelEmoteComposite(channel, emote), ReactionBan.class);
+    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, EmojiUnion emoji) {
+        return switch (emoji.getType()) {
+            case CUSTOM -> key(channel, emoji.asCustom());
+            case UNICODE -> EntityKey.of(new ChannelEmoteComposite(channel, emoji.asUnicode()), ReactionBan.class);
+        };
     }
 
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(TextChannel channel, Emote emote) {
-        return EntityKey.of(new ChannelEmoteComposite(channel.getIdLong(), emote.getId()), ReactionBan.class);
+    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, CustomEmoji emoji) {
+        return EntityKey.of(new ChannelEmoteComposite(channel, emoji), ReactionBan.class);
     }
 
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(TextChannel channel, String string) {
+    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, String string) {
         return EntityKey.of(new ChannelEmoteComposite(channel.getIdLong(), string), ReactionBan.class);
     }
 
@@ -91,8 +94,12 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
         ChannelEmoteComposite() {
         }
 
-        public ChannelEmoteComposite(TextChannel channel, MessageReaction.ReactionEmote emote) {
-            this(channel.getIdLong(), emote.isEmote() ? emote.getEmote().getId() : emote.getName());
+        public ChannelEmoteComposite(Channel channel, UnicodeEmoji emoji) {
+            this(channel.getIdLong(), emoji.getName());
+        }
+
+        public ChannelEmoteComposite(Channel channel, CustomEmoji emoji) {
+            this(channel.getIdLong(), emoji.getId());
         }
 
         public ChannelEmoteComposite(long channelId, String emote) {

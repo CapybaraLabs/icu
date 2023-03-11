@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2019 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,13 +17,12 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
-import space.npstr.sqlsauce.DatabaseWrapper;
-
-import javax.annotation.CheckReturnValue;
 import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.CheckReturnValue;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 01.05.19.

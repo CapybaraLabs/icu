@@ -28,11 +28,6 @@ java {
 }
 
 repositories {
-    maven {
-        url 'https://m2.dv8tion.net/releases'
-        content { includeModule("net.dv8tion", "JDA") }
-        content { includeGroup("club.minnced") }
-    }
     mavenCentral()                          // everything else
     maven { url 'https://jitpack.io' }      // for getting builds from github
 }
@@ -108,7 +103,7 @@ static def properReleasesOnly() {
     return { rules ->
         rules.all { ComponentSelection selection ->
             boolean rejected = ['alpha', 'beta', 'rc', 'preview', 'm1', 'm2', 'm3', 'cr1'].any {
-                q -> selection.candidate.version.toLowerCase().contains(q)
+                q -> selection.candidate.version.toLowerCase().contains(q) && !selection.candidate.module.equals("JDA")
             }
             if (rejected) {
                 selection.reject('Release candidate')

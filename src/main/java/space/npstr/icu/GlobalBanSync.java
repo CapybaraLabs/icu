@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,17 +17,6 @@
 
 package space.npstr.icu;
 
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.sharding.ShardManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import space.npstr.icu.db.entities.GlobalBan;
-import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +29,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import space.npstr.icu.db.entities.GlobalBan;
+import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 11.03.18.
@@ -120,7 +120,7 @@ public class GlobalBanSync {
                 reason = reason.substring(0, 512);
             }
 
-            futures.add(guild.ban(Long.toString(ban.getUserId()), 1, reason).submit());
+            futures.add(guild.ban(UserSnowflake.fromId(ban.getUserId()), 1, TimeUnit.DAYS).reason(reason).submit());
         }
 
         //wait to be done before moving on

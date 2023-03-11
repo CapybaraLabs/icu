@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,9 +17,13 @@
 
 package space.npstr.icu.listeners;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.function.Supplier;
+import javax.annotation.CheckReturnValue;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
@@ -28,11 +32,6 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.AuditLogUtil;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import javax.annotation.CheckReturnValue;
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Created by napster on 16.05.18.

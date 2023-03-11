@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Dennis Neufeld
+ * Copyright (C) 2018 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,10 +17,18 @@
 
 package space.npstr.icu.db.entities;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import javax.annotation.Nullable;
+import javax.persistence.Cacheable;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ColumnDefault;
@@ -28,15 +36,6 @@ import org.hibernate.annotations.Type;
 import space.npstr.sqlsauce.entities.discord.BaseDiscordGuild;
 import space.npstr.sqlsauce.fp.types.EntityKey;
 import space.npstr.sqlsauce.hibernate.types.BasicType;
-
-import javax.annotation.Nullable;
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * Created by napster on 25.01.18.
@@ -227,7 +226,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return reportingChannelId;
     }
 
-    public GuildSettings setReportingChannel(TextChannel reportingChannel) {
+    public GuildSettings setReportingChannel(MessageChannel reportingChannel) {
         this.reportingChannelId = reportingChannel.getIdLong();
         return this;
     }
@@ -260,7 +259,7 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return logChannelId;
     }
 
-    public GuildSettings setLogChannel(TextChannel logChannel) {
+    public GuildSettings setLogChannel(MessageChannel logChannel) {
         this.logChannelId = logChannel.getIdLong();
         return this;
     }

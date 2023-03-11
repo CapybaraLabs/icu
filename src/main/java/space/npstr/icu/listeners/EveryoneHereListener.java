@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,16 +17,16 @@
 
 package space.npstr.icu.listeners;
 
+import java.util.function.Supplier;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import java.util.function.Supplier;
 
 /**
  * Created by napster on 25.01.18.
@@ -42,11 +42,13 @@ public class EveryoneHereListener extends ThreadedListener {
     }
 
     @Override
-    public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-        getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if (event.isFromGuild()) {
+            getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+        }
     }
 
-    private void guildMessageReceived(GuildMessageReceivedEvent event) {
+    private void guildMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }
@@ -68,16 +70,16 @@ public class EveryoneHereListener extends ThreadedListener {
         Long hereId = guildSettings.getHereRoleId();
         Role hereRole = hereId != null ? guild.getRoleById(hereId) : null;
         if (hereRole != null
-                && (msg.mentionsEveryone() || msg.isMentioned(hereRole))
-                && !member.getRoles().contains(hereRole)) {
+            && (msg.getMentions().mentionsEveryone() || msg.getMentions().isMentioned(hereRole))
+            && !member.getRoles().contains(hereRole)) {
             addRole(msg, member, hereRole);
         }
 
         Long everyoneId = guildSettings.getEveryoneRoleId();
         Role everyoneRole = everyoneId != null ? guild.getRoleById(everyoneId) : null;
         if (everyoneRole != null
-                && (msg.mentionsEveryone() || msg.isMentioned(everyoneRole))
-                && !member.getRoles().contains(everyoneRole)) {
+            && (msg.getMentions().mentionsEveryone() || msg.getMentions().isMentioned(everyoneRole))
+            && !member.getRoles().contains(everyoneRole)) {
             addRole(msg, member, everyoneRole);
         }
     }
@@ -86,13 +88,13 @@ public class EveryoneHereListener extends ThreadedListener {
     private void addRole(Message msg, Member member, Role role) {
         if (role.getGuild().getSelfMember().canInteract(role)) {
             role.getGuild().addRoleToMember(member, role).queue(__ -> {
-                if (role.getGuild().getSelfMember().hasPermission(msg.getTextChannel(), Permission.MESSAGE_ADD_REACTION)) {
-                    msg.addReaction("👌").queue();
-                    msg.addReaction("👌🏻").queue();
-                    msg.addReaction("👌🏼").queue();
-                    msg.addReaction("👌🏽").queue();
-                    msg.addReaction("👌🏾").queue();
-                    msg.addReaction("👌🏿").queue();
+                if (role.getGuild().getSelfMember().hasPermission(msg.getChannel().asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION)) {
+                    msg.addReaction(Emoji.fromUnicode("👌")).queue();
+                    msg.addReaction(Emoji.fromUnicode("👌🏻")).queue();
+                    msg.addReaction(Emoji.fromUnicode("👌🏼")).queue();
+                    msg.addReaction(Emoji.fromUnicode("👌🏽")).queue();
+                    msg.addReaction(Emoji.fromUnicode("👌🏾")).queue();
+                    msg.addReaction(Emoji.fromUnicode("👌🏿")).queue();
                 }
             });
         }

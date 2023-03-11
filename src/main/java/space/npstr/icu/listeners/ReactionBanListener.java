@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2019 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,19 +17,20 @@
 
 package space.npstr.icu.listeners;
 
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.icu.db.entities.ReactionBan;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Created by napster on 01.05.19.
@@ -46,17 +47,25 @@ public class ReactionBanListener extends ListenerAdapter {
     }
 
     @Override
-    public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
-        Optional.ofNullable(wrapperSupp.get().getEntity(ReactionBan.key(event.getChannel(), event.getReactionEmote())))
-                .ifPresent(ban -> {
-                    deleteReaction(event);
-                    issueBan(event.getGuild(), event.getUser(), ban);
-                });
+    public void onMessageReactionAdd(MessageReactionAddEvent event) {
+        Optional.ofNullable(wrapperSupp.get().getEntity(ReactionBan.key(event.getChannel(), event.getReaction().getEmoji())))
+            .ifPresent(ban -> {
+                User user = event.getUser();
+                if (user == null) {
+                    user = event.retrieveUser().submit().join();
+                }
+                deleteReaction(event, user);
+                issueBan(event.getGuild(), user, ban);
+            });
     }
 
-    private void deleteReaction(GuildMessageReactionAddEvent event) {
+    private void deleteReaction(MessageReactionAddEvent event, User user) {
+        if (!event.isFromGuild()) {
+            return;
+        }
+
         Guild guild = event.getGuild();
-        TextChannel channel = event.getChannel();
+        GuildMessageChannel channel = event.getChannel().asGuildMessageChannel();
         if (!guild.getSelfMember().hasPermission(channel, Permission.MESSAGE_MANAGE)) {
             //try to report the issue
             GuildSettings settings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
@@ -71,8 +80,7 @@ public class ReactionBanListener extends ListenerAdapter {
             }
             return;
         }
-
-        event.getReaction().removeReaction(event.getUser()).queue();
+        event.getReaction().removeReaction(user).queue();
     }
 
     private void issueBan(Guild guild, User user, ReactionBan reactionBan) {
@@ -105,8 +113,8 @@ public class ReactionBanListener extends ListenerAdapter {
 
         final String theReason = reason;
         user.openPrivateChannel().submit()
-                .thenCompose(pc -> pc.sendMessage(message).submit())
-                .whenComplete((__, ___) -> guild.ban(user, 0, theReason).queue());
+            .thenCompose(pc -> pc.sendMessage(message).submit())
+            .whenComplete((__, ___) -> guild.ban(user, 0, TimeUnit.DAYS).reason(theReason).queue());
 
 
         Optional<TextChannel> textChannel = reportingChannelFetcher.fetchWorkingReportingChannel(guild);

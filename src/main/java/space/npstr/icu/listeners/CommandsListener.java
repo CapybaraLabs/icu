@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -35,16 +35,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
@@ -76,11 +80,13 @@ public class CommandsListener extends ThreadedListener {
     }
 
     @Override
-    public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-        getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if (event.isFromGuild()) {
+            getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+        }
     }
 
-    private void guildMessageReceived(GuildMessageReceivedEvent event) {
+    private void guildMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) {
             return;
         }
@@ -89,7 +95,7 @@ public class CommandsListener extends ThreadedListener {
             return;
         }
 
-        if (!event.getMessage().getMentionedUsers().contains(event.getJDA().getSelfUser())) {
+        if (!event.getMessage().getMentions().getUsers().contains(event.getJDA().getSelfUser())) {
             return;
         }
         Member member = event.getMember();
@@ -111,11 +117,11 @@ public class CommandsListener extends ThreadedListener {
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
             event.getChannel().sendMessage("Reset the everyone role").queue();
         } else if (content.contains("set everyone")) {
-            if (msg.getMentionedRoles().isEmpty()) {
+            if (msg.getMentions().getRoles().isEmpty()) {
                 event.getChannel().sendMessage("Please mention the role you want to set").queue();
                 return;
             }
-            Role r = msg.getMentionedRoles().get(0);
+            Role r = msg.getMentions().getRoles().get(0);
 
             if (!guild.getSelfMember().canInteract(r)) {
                 event.getChannel().sendMessage("I cannot interact with that role. Please choose another one or move my bot role higher.").queue();
@@ -128,11 +134,11 @@ public class CommandsListener extends ThreadedListener {
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
             event.getChannel().sendMessage("Reset the here role").queue();
         } else if (content.contains("set here")) {
-            if (msg.getMentionedRoles().isEmpty()) {
+            if (msg.getMentions().getRoles().isEmpty()) {
                 event.getChannel().sendMessage("Please mention the role you want to set").queue();
                 return;
             }
-            Role r = msg.getMentionedRoles().get(0);
+            Role r = msg.getMentions().getRoles().get(0);
 
             if (!guild.getSelfMember().canInteract(r)) {
                 event.getChannel().sendMessage("I cannot interact with that role. Please choose another one or move my bot role higher.").queue();
@@ -157,7 +163,7 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("Reset the member role").queue();
         } else if (content.contains("set memberrole")) {
             Role r = null;
-            if (msg.getMentionedRoles().isEmpty()) {
+            if (msg.getMentions().getRoles().isEmpty()) {
                 for (String str : content.split("\\p{javaSpaceChar}+")) {
                     try {
                         long roleId = Long.parseUnsignedLong(str);
@@ -174,7 +180,7 @@ public class CommandsListener extends ThreadedListener {
                     return;
                 }
             } else {
-                r = msg.getMentionedRoles().get(0);
+                r = msg.getMentions().getRoles().get(0);
             }
 
             Role memberRole = r;
@@ -203,7 +209,11 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("Reset the reporting channel").queue();
         } else if (content.contains("set reporting")) {
 
-            TextChannel reportingChannel = msg.getMentionedChannels().stream().findFirst().orElse(msg.getTextChannel());
+            MessageChannel reportingChannel = msg.getMentions().getChannels().stream()
+                .filter(it -> it instanceof MessageChannel)
+                .map(it -> (MessageChannel) it)
+                .findFirst()
+                .orElse(msg.getChannel());
 
             if (!reportingChannel.canTalk()) {
                 event.getChannel().sendMessage("I can't talk in " + reportingChannel.getAsMention()).queue();
@@ -217,7 +227,11 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("Reset the log channel").queue();
         } else if (content.contains("set log")) {
 
-            TextChannel logChannel = msg.getMentionedChannels().stream().findFirst().orElse(msg.getTextChannel());
+            MessageChannel logChannel = msg.getMentions().getChannels().stream()
+                .filter(it -> it instanceof MessageChannel)
+                .map(it -> (MessageChannel) it)
+                .findFirst()
+                .orElse(msg.getChannel());
 
             if (!logChannel.canTalk()) {
                 event.getChannel().sendMessage("I can't talk in " + logChannel.getAsMention()).queue();
@@ -227,10 +241,10 @@ public class CommandsListener extends ThreadedListener {
             wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setLogChannel(logChannel));
             event.getChannel().sendMessage("Set up " + logChannel.getAsMention() + " as the log channel 🚔").queue();
         } else if (content.contains("add admin")) {
-            List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
-            List<Member> membersToAdd = msg.getMentionedMembers().stream()
-                    .filter(m -> m.getUser().getIdLong() != m.getJDA().getSelfUser().getIdLong())
-                    .collect(Collectors.toList());
+            List<Role> rolesToAdd = new ArrayList<>(msg.getMentions().getRoles());
+            List<Member> membersToAdd = msg.getMentions().getMembers().stream()
+                .filter(m -> m.getUser().getIdLong() != m.getJDA().getSelfUser().getIdLong())
+                .collect(Collectors.toList());
 
             for (String str : content.split("\\p{javaSpaceChar}+")) {
                 try {
@@ -260,7 +274,7 @@ public class CommandsListener extends ThreadedListener {
 
             event.getChannel().sendMessage("Added " + String.join(", ", added) + " as admins.").queue();
         } else if (content.contains("remove admin")) {
-            List<Role> rolesToRemove = new ArrayList<>(msg.getMentionedRoles());
+            List<Role> rolesToRemove = new ArrayList<>(msg.getMentions().getRoles());
             if (!rolesToRemove.isEmpty()) {
                 Role r = rolesToRemove.get(0);
                 wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
@@ -274,9 +288,9 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            List<Member> membersToRemove = msg.getMentionedMembers().stream()
-                    .filter(m -> m.getUser().getIdLong() != m.getJDA().getSelfUser().getIdLong())
-                    .collect(Collectors.toList());
+            List<Member> membersToRemove = msg.getMentions().getMembers().stream()
+                .filter(m -> m.getUser().getIdLong() != m.getJDA().getSelfUser().getIdLong())
+                .toList();
 
             if (!membersToRemove.isEmpty()) {
                 Member m = membersToRemove.get(0);
@@ -336,7 +350,7 @@ public class CommandsListener extends ThreadedListener {
             //nothing found for the given input
             event.getChannel().sendMessage("Please mention a role or member or use their id.").queue();
         } else if (content.contains("add ignored")) {
-            List<Role> rolesToAdd = new ArrayList<>(msg.getMentionedRoles());
+            List<Role> rolesToAdd = new ArrayList<>(msg.getMentions().getRoles());
             for (String str : content.split("\\p{javaSpaceChar}+")) {
                 try {
                     long id = Long.parseUnsignedLong(str);
@@ -358,7 +372,7 @@ public class CommandsListener extends ThreadedListener {
 
             event.getChannel().sendMessage("Added " + String.join(", ", added) + " as ignored roles.").queue();
         } else if (content.contains("remove ignored")) {
-            List<Role> rolesToRemove = new ArrayList<>(msg.getMentionedRoles());
+            List<Role> rolesToRemove = new ArrayList<>(msg.getMentions().getRoles());
             if (!rolesToRemove.isEmpty()) {
                 Role role = rolesToRemove.get(0);
                 wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
@@ -427,7 +441,7 @@ public class CommandsListener extends ThreadedListener {
             }
 
             //identify role
-            Set<Role> mentionedRoles = new HashSet<>(msg.getMentionedRoles());
+            Set<Role> mentionedRoles = new HashSet<>(msg.getMentions().getRoles());
             if (mentionedRoles.isEmpty()) {
                 for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     try {
@@ -685,7 +699,7 @@ public class CommandsListener extends ThreadedListener {
                 if (userReport.length() > 0) {
                     found.incrementAndGet();
                     String user = "Member " + m.getAsMention() + " (" + m.getUser() + ") is banned in:\n";
-                    event.getChannel().sendMessage(user + userReport.toString()).queue();
+                    event.getChannel().sendMessage(user + userReport).queue();
                 }
             });
 
@@ -696,27 +710,27 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("add reaction ban")) {
             String[] split = content.trim().split("add reaction ban");
 
-            List<TextChannel> channels = msg.getMentionedChannels();
+            List<GuildChannel> channels = msg.getMentions().getChannels();
             if (channels.isEmpty()) {
                 event.getChannel().sendMessage("Please mention at least one channel to add a reaction ban to").queue();
                 return;
             }
 
-            List<Emote> emotes = msg.getEmotes();
-            String[] emojis = split[1].trim().split("\\s+");
+            List<CustomEmoji> customEmojis = msg.getMentions().getCustomEmojis();
+            String[] unicodeEmojis = split[1].trim().split("\\s+");
 
-            if (emotes.isEmpty() && emojis.length == 0) {
-                event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
+            if (customEmojis.isEmpty() && unicodeEmojis.length == 0) {
+                event.getChannel().sendMessage("Please mention at least one emoji").queue();
                 return;
             }
 
-            for (TextChannel channel : channels) {
-                for (Emote emote : emotes) {
-                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, emote), Function.identity());
+            for (GuildChannel channel : channels) {
+                for (CustomEmoji customEmoji : customEmojis) {
+                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, customEmoji), Function.identity());
                 }
 
-                for (String emoji : emojis) {
-                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, emoji), Function.identity());
+                for (String unicodeEmoji : unicodeEmojis) {
+                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, unicodeEmoji), Function.identity());
                 }
             }
 
@@ -724,26 +738,26 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("remove reaction ban")) {
             String[] split = content.trim().split("remove reaction ban");
 
-            List<TextChannel> channels = msg.getMentionedChannels();
+            List<GuildChannel> channels = msg.getMentions().getChannels();
             if (channels.isEmpty()) {
                 event.getChannel().sendMessage("Please mention at least one channel to remove a reaction ban from").queue();
                 return;
             }
 
-            List<Emote> emotes = msg.getEmotes();
-            String[] emojis = split[1].trim().split("\\s+");
+            List<CustomEmoji> customEmojis = msg.getMentions().getCustomEmojis();
+            String[] unicodeEmojis = split[1].trim().split("\\s+");
 
-            if (emotes.isEmpty() && emojis.length == 0) {
+            if (customEmojis.isEmpty() && unicodeEmojis.length == 0) {
                 event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
                 return;
             }
 
-            for (TextChannel channel : channels) {
-                for (Emote emote : emotes) {
-                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emote));
+            for (GuildChannel channel : channels) {
+                for (CustomEmoji emoji : customEmojis) {
+                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emoji));
                 }
 
-                for (String emoji : emojis) {
+                for (String emoji : unicodeEmojis) {
                     this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emoji));
                 }
             }
@@ -751,8 +765,8 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("list reaction bans")) {
             List<ReactionBan> reactionBans = wrapperSupp.get().loadAll(ReactionBan.class).stream()
-                    .filter(reactionBan -> guild.getTextChannelById(reactionBan.getId().getChannelId()) != null)
-                    .collect(Collectors.toList());
+                .filter(reactionBan -> guild.getTextChannelById(reactionBan.getId().getChannelId()) != null)
+                .toList();
 
             StringBuilder output = new StringBuilder();
             if (reactionBans.isEmpty()) {
@@ -773,16 +787,19 @@ public class CommandsListener extends ThreadedListener {
 
         } else if (content.contains("clear reactions")) {
             String[] split = content.split("clear reactions");
-            List<TextChannel> channels = msg.getMentionedChannels();
+            List<GuildMessageChannel> channels = msg.getMentions().getChannels().stream()
+                .filter(it -> it instanceof GuildMessageChannel)
+                .map(it -> (GuildMessageChannel) it)
+                .toList();
             if (channels.isEmpty()) {
-                event.getChannel().sendMessage("Please mention at least on channel.").queue();
+                event.getChannel().sendMessage("Please mention at least one message channel.").queue();
                 return;
             }
 
-            List<Emote> emotes = msg.getEmotes();
-            List<String> emojis = Arrays.asList(split[1].trim().split("\\s+"));
+            List<CustomEmoji> customEmojis = msg.getMentions().getCustomEmojis();
+            List<String> unicodeEmojis = Arrays.asList(split[1].trim().split("\\s+"));
 
-            if (emotes.isEmpty() && emojis.isEmpty()) {
+            if (customEmojis.isEmpty() && unicodeEmojis.isEmpty()) {
                 event.getChannel().sendMessage("Please mention at least one emote or emoji").queue();
                 return;
             }
@@ -790,15 +807,15 @@ public class CommandsListener extends ThreadedListener {
             List<CompletableFuture<?>> futures = new ArrayList<>();
             AtomicInteger reactionsRemoved = new AtomicInteger(0);
 
-            for (TextChannel channel : channels) {
+            for (GuildMessageChannel channel : channels) {
                 CompletableFuture<?> iterableFuture = channel.getIterableHistory().forEachAsync(message -> {
                     message.getReactions().forEach(reaction -> {
-                        MessageReaction.ReactionEmote reactionEmote = reaction.getReactionEmote();
+                        EmojiUnion reactionEmoji = reaction.getEmoji();
                         Optional<Function<User, RestAction<Void>>> cleanup = Optional.empty();
-                        if (reactionEmote.isEmote() && emotes.contains(reactionEmote.getEmote())) {
-                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getEmote(), user));
-                        } else if (emojis.contains(reactionEmote.getName())) {
-                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmote.getName(), user));
+                        if (reactionEmoji.getType() == Emoji.Type.CUSTOM && customEmojis.contains(reactionEmoji.asCustom())) {
+                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmoji.asCustom(), user));
+                        } else if (unicodeEmojis.contains(reactionEmoji.getName())) {
+                            cleanup = Optional.of(user -> channel.removeReactionById(message.getIdLong(), reactionEmoji.asUnicode(), user));
                         }
 
                         cleanup.ifPresent(action -> {
@@ -942,7 +959,7 @@ public class CommandsListener extends ThreadedListener {
             if (admins.length() == 0) {
                 output += "No other admins roles or members configured.\n";
             } else {
-                output += "Other admins:\n" + admins.toString() + "\n";
+                output += "Other admins:\n" + admins + "\n";
             }
 
             event.getChannel().sendMessage(output).queue();
@@ -1020,10 +1037,10 @@ public class CommandsListener extends ThreadedListener {
     //adjusted content = message without the command and other stuff thats definitely not the user name
     private static Set<User> identifyUser(Message msg, String adjustedContent, ShardManager shardManager) {
         Guild guild = msg.getGuild();
-        Set<User> mentionedUsers = msg.getMentionedMembers().stream()
-                .map(Member::getUser)
-                .filter(user -> !user.isBot())
-                .collect(Collectors.toSet());
+        Set<User> mentionedUsers = msg.getMentions().getMembers().stream()
+            .map(Member::getUser)
+            .filter(user -> !user.isBot())
+            .collect(Collectors.toSet());
         if (mentionedUsers.isEmpty()) {
             for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                 try {
