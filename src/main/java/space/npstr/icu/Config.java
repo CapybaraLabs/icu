@@ -51,10 +51,6 @@ public class Config {
     public final String discordToken;
     public final String jdbcUrl;
     public final String sentryDsn;
-    public final boolean nahEnhancement;
-    public final long nahReactionEmoteIdDeleted;
-    public final long nahReactionEmoteIdKicked;
-    public final long nahReactionEmoteIdBanned;
 
     public Config() throws IOException {
 
@@ -78,11 +74,6 @@ public class Config {
 
             this.sentryDsn = (String) sneaky.getOrDefault("sentryDsn", "");
             new SentryConfiguration(sentryDsn).init();
-
-            this.nahEnhancement = (boolean) sneaky.getOrDefault("nahEnhancement", false);
-            this.nahReactionEmoteIdDeleted = (long) sneaky.getOrDefault("nahReactionEmoteIdDeleted", 0L);
-            this.nahReactionEmoteIdKicked = (long) sneaky.getOrDefault("nahReactionEmoteIdKicked", 0L);
-            this.nahReactionEmoteIdBanned = (long) sneaky.getOrDefault("nahReactionEmoteIdBanned", 0L);
         }
     }
 }

@@ -17,6 +17,9 @@
 
 package space.npstr.icu;
 
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -29,15 +32,10 @@ import space.npstr.icu.listeners.BanLogs;
 import space.npstr.icu.listeners.CommandsListener;
 import space.npstr.icu.listeners.EveryoneHereListener;
 import space.npstr.icu.listeners.MemberRoleManager;
-import space.npstr.icu.listeners.NahCrossFunctionality;
 import space.npstr.icu.listeners.ReactionBanListener;
 import space.npstr.icu.listeners.RoleChangesListener;
 import space.npstr.icu.listeners.SuspiciousUsersWarner;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
-import java.util.function.Supplier;
 
 /**
  * Created by napster on 13.02.18.
@@ -94,7 +92,6 @@ public class ShardManagerManager {
                 .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new SuspiciousUsersWarner(wrapperSupplier, shardManagerSupplier))
                 .addEventListeners(new BanLogs(wrapperSupplier))
-                .addEventListeners(new NahCrossFunctionality())
                 .addEventListeners(new ReactionBanListener(wrapperSupplier))
                 .setEnableShutdownHook(false);
         try {
