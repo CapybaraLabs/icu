@@ -1,8 +1,4 @@
 # build and IDE cruft
-.idea/*
-.gradle/*
-build/*
-out/*
 
 # log stuff
 logs/*
