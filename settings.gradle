@@ -12,14 +12,14 @@ ext {
 
 	//plugin versions
 	gradleGitVersion        = '[2.4.0, 3.0['
-	shadowVersion           = '7.+'
+	shadowVersion           = '8.+'
 	versionsVersion         = '0.+'
 
 	jdaVersion              = '[4.4.0_351, 4.5['
 	logbackVersion          = '[1.2.3, 2.0['
 	sentryVersion           = '[6.0.0, 7.0['
 	okhttpVersion           = '[3.14.1, 4.0['
-	yamlVersion             = '[1.24, 2.0['
+	yamlVersion             = '[2.0, 3.0['
 	sqlsauceVersion         = '[0.4.3, 0.5['
 	hibernateVersion        = '5.4.27.Final'
 	annotationsVersion      = '[0.0.1, 0.1['
