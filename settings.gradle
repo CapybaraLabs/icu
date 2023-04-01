@@ -18,7 +18,6 @@ ext {
 	jdaVersion              = '[5.0.0-beta.5, 5.1['
 	logbackVersion          = '[1.2.3, 2.0['
 	sentryVersion           = '[6.0.0, 7.0['
-	okhttpVersion           = '[3.14.1, 4.0['
 	yamlVersion             = '[2.0, 3.0['
 	sqlsauceVersion         = '[0.4.3, 0.5['
 	hibernateVersion        = '5.4.27.Final'
@@ -43,7 +42,6 @@ dependencyResolutionManagement {
 			library("jda", "net.dv8tion:JDA:$jdaVersion")
 			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
 			library("sentry", "io.sentry:sentry-logback:$sentryVersion")
-			library("okhttp", "com.squareup.okhttp3:okhttp:$okhttpVersion")
 			library("yaml", "org.yaml:snakeyaml:$yamlVersion")
 			library("sqlsauce-core", "space.npstr.SqlSauce", "sqlsauce-core").versionRef("sqlsauce")
 			library("sqlsauce-discord", "space.npstr.SqlSauce", "discord-entities").versionRef("sqlsauce")

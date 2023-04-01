@@ -39,7 +39,6 @@ dependencies {
     implementation libs.jda
     implementation libs.logback
     implementation libs.sentry
-    implementation libs.okhttp
     implementation libs.yaml
     implementation libs.sqlsauce.core
     implementation libs.sqlsauce.discord

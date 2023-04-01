@@ -3,8 +3,8 @@
 # This file is expected to be part of source control.
 com.github.ben-manes.versions:com.github.ben-manes.versions.gradle.plugin:0.46.0=classpath
 com.github.ben-manes:gradle-versions-plugin:0.46.0=classpath
-com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:8.1.0=classpath
-com.github.johnrengelman:shadow:8.1.0=classpath
+com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:8.1.1=classpath
+com.github.johnrengelman:shadow:8.1.1=classpath
 com.gorylenko.gradle-git-properties:com.gorylenko.gradle-git-properties.gradle.plugin:2.4.1=classpath
 com.gorylenko.gradle-git-properties:gradle-git-properties:2.4.1=classpath
 com.squareup.moshi:moshi-kotlin:1.12.0=classpath
@@ -18,7 +18,7 @@ org.apache.ant:ant-launcher:1.10.13=classpath
 org.apache.ant:ant:1.10.13=classpath
 org.apache.logging.log4j:log4j-api:2.20.0=classpath
 org.apache.logging.log4j:log4j-core:2.20.0=classpath
-org.codehaus.plexus:plexus-utils:3.5.0=classpath
+org.codehaus.plexus:plexus-utils:3.5.1=classpath
 org.jdom:jdom2:2.0.6.1=classpath
 org.jetbrains.kotlin:kotlin-reflect:1.6.21=classpath
 org.jetbrains.kotlin:kotlin-stdlib-common:1.6.21=classpath
