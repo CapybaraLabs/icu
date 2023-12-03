@@ -17,16 +17,12 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.entities.User;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import space.npstr.sqlsauce.entities.discord.BaseDiscordUser;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-
-import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import net.dv8tion.jda.api.entities.User;
+import space.npstr.sqlsauce.entities.discord.BaseDiscordUser;
+import space.npstr.sqlsauce.fp.types.EntityKey;
 
 /**
  * Created by napster on 10.03.18.
@@ -35,8 +31,6 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "global_bans")
-@Cacheable(value = true)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "global_bans")
 public class GlobalBan extends BaseDiscordUser<GlobalBan> {
 
     @Column(name = "reason", columnDefinition = "text", nullable = false)

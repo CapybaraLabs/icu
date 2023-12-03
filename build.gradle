@@ -42,8 +42,7 @@ dependencies {
     implementation libs.yaml
     implementation libs.sqlsauce.core
     implementation libs.sqlsauce.discord
-    implementation libs.hibernate.jcache
-    implementation libs.caffeine.jcache
+    implementation libs.caffeine
     implementation libs.annotations
     implementation libs.jaxb
     implementation libs.dsproxy

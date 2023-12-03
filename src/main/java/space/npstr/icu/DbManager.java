@@ -17,10 +17,11 @@
 
 package space.npstr.icu;
 
-import com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import net.ttddyy.dsproxy.listener.logging.SLF4JLogLevel;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
-import org.hibernate.cache.jcache.internal.JCacheRegionFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.tool.schema.Action;
 import org.slf4j.Logger;
@@ -28,10 +29,6 @@ import org.slf4j.LoggerFactory;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.sqlsauce.DatabaseConnection;
 import space.npstr.sqlsauce.DatabaseWrapper;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by napster on 13.02.18.
@@ -82,11 +79,6 @@ public class DbManager {
                             .multiline()
                     )
                     .setHibernateProperty(Environment.HBM2DDL_AUTO, Action.UPDATE.name().toLowerCase())
-                    .setHibernateProperty(Environment.USE_SECOND_LEVEL_CACHE, true)
-                    .setHibernateProperty(Environment.USE_QUERY_CACHE, true)
-                    .setHibernateProperty(Environment.CACHE_REGION_FACTORY, JCacheRegionFactory.class.getName())
-                    .setHibernateProperty("hibernate.javax.cache.provider", CaffeineCachingProvider.class.getName())
-                    .setHibernateProperty("hibernate.javax.cache.missing_cache_strategy", "fail")
 
                     //hide some exception spam on start, as postgres does not support CLOBs
                     // https://stackoverflow.com/questions/43905119/postgres-error-method-org-postgresql-jdbc-pgconnection-createclob-is-not-imple

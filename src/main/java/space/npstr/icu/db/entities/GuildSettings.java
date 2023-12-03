@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import javax.annotation.Nullable;
-import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -29,8 +28,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Type;
 import space.npstr.sqlsauce.entities.discord.BaseDiscordGuild;
@@ -42,8 +39,6 @@ import space.npstr.sqlsauce.hibernate.types.BasicType;
  */
 @Entity
 @Table(name = "guild_settings")
-@Cacheable(value = true)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "guild_settings")
 public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
     @Nullable

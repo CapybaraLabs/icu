@@ -19,7 +19,6 @@ package space.npstr.icu.db.entities;
 
 import java.io.Serializable;
 import java.util.Objects;
-import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
@@ -37,7 +36,6 @@ import space.npstr.sqlsauce.fp.types.EntityKey;
  */
 @Entity
 @Table(name = "reaction_ban")
-@Cacheable(value = false) //always fetch the most recent roles for a user
 public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite, ReactionBan> {
 
     @SuppressWarnings("NullableProblems") //never null if correctly initialized by Hibernate / sqlsauce
