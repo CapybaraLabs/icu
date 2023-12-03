@@ -18,7 +18,9 @@ plugins {
 group 'space.npstr.icu'
 version '0.1.0-SNAPSHOT'
 
-mainClassName = 'space.npstr.icu.Main'
+application {
+    mainClass = 'space.npstr.icu.Main'
+}
 
 java {
     toolchain {
