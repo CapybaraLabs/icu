@@ -30,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.dv8tion.jda.api.Permission;
@@ -53,6 +52,8 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
 import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GuildSettings;
@@ -65,18 +66,23 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * <p>
  * yeah this is ugly af without any command / context framework
  */
+@Component
 @SuppressWarnings("DuplicatedCode")
 public class CommandsListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(CommandsListener.class);
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
-    private final Supplier<ShardManager> shardManagerSupp;
+    private final DatabaseWrapper wrapper;
+    private final ObjectProvider<ShardManager> shardManager;
 
 
-    public CommandsListener(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
-        this.wrapperSupp = wrapperSupplier;
-        this.shardManagerSupp = shardManagerSupplier;
+    public CommandsListener(DatabaseWrapper wrapper, ObjectProvider<ShardManager> shardManager) {
+        this.wrapper = wrapper;
+        this.shardManager = shardManager;
+    }
+
+    private ShardManager shardManager() {
+        return shardManager.getObject();
     }
 
     @Override
@@ -103,7 +109,7 @@ public class CommandsListener extends ThreadedListener {
             return;
         }
 
-        if (!isAdmin(wrapperSupp.get(), member)) {
+        if (!isAdmin(wrapper, member)) {
             return;
         }
 
@@ -114,7 +120,7 @@ public class CommandsListener extends ThreadedListener {
         log.info("Mention received: {}", msg.getContentDisplay());
 
         if (content.contains("reset everyone")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetEveryoneRole);
             event.getChannel().sendMessage("Reset the everyone role").queue();
         } else if (content.contains("set everyone")) {
             if (msg.getMentions().getRoles().isEmpty()) {
@@ -128,10 +134,10 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setEveryoneRole(r));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setEveryoneRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as everyone role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("reset here")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetHereRole);
             event.getChannel().sendMessage("Reset the here role").queue();
         } else if (content.contains("set here")) {
             if (msg.getMentions().getRoles().isEmpty()) {
@@ -145,10 +151,10 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setHereRole(r));
             event.getChannel().sendMessage("Set up " + r.getAsMention() + " as here role " + "👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("reset memberrole")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> {
                 Long memberRoleId = gs.getMemberRoleId();
                 if (memberRoleId != null) {
                     Role current = guild.getRoleById(memberRoleId);
@@ -190,7 +196,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> {
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> {
                 Long memberRoleId = gs.getMemberRoleId();
                 if (memberRoleId != null) {
                     Role current = guild.getRoleById(memberRoleId);
@@ -205,7 +211,7 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("Set up " + memberRole.getAsMention() + " as the member role. All existing" +
                     " and newly joining human users will get it assigned shortly.").queue();
         } else if (content.contains("reset reporting")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetReportingChannel);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetReportingChannel);
             event.getChannel().sendMessage("Reset the reporting channel").queue();
         } else if (content.contains("set reporting")) {
 
@@ -220,10 +226,10 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setReportingChannel(reportingChannel));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setReportingChannel(reportingChannel));
             event.getChannel().sendMessage("Set up " + reportingChannel.getAsMention() + " as the reporting channel 🚔").queue();
         } else if (content.contains("reset log")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetLogChannel);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::resetLogChannel);
             event.getChannel().sendMessage("Reset the log channel").queue();
         } else if (content.contains("set log")) {
 
@@ -238,7 +244,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setLogChannel(logChannel));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.setLogChannel(logChannel));
             event.getChannel().sendMessage("Set up " + logChannel.getAsMention() + " as the log channel 🚔").queue();
         } else if (content.contains("add admin")) {
             List<Role> rolesToAdd = new ArrayList<>(msg.getMentions().getRoles());
@@ -266,7 +272,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addAdminRoles(rolesToAdd).addAdminUsers(membersToAdd));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addAdminRoles(rolesToAdd).addAdminUsers(membersToAdd));
             List<String> added = Stream.concat(
                     membersToAdd.stream().map(m -> (IMentionable) m),
                     rolesToAdd.stream().map(r -> (IMentionable) r)
@@ -277,7 +283,7 @@ public class CommandsListener extends ThreadedListener {
             List<Role> rolesToRemove = new ArrayList<>(msg.getMentions().getRoles());
             if (!rolesToRemove.isEmpty()) {
                 Role r = rolesToRemove.get(0);
-                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     if (guildSettings.isAdminRole(r)) {
                         event.getChannel().sendMessage("Removing role " + r.getName() + " " + r.getId() + " from admins.").queue();
                     } else {
@@ -294,7 +300,7 @@ public class CommandsListener extends ThreadedListener {
 
             if (!membersToRemove.isEmpty()) {
                 Member m = membersToRemove.get(0);
-                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     if (guildSettings.isAdminUser(m)) {
                         event.getChannel().sendMessage("Removing member " + m.getEffectiveName() + " " + m.getUser().getId() + " from admins.").queue();
                     } else {
@@ -315,10 +321,10 @@ public class CommandsListener extends ThreadedListener {
 
             if (!idsToRemove.isEmpty()) {
                 long id = idsToRemove.get(0);
-                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     Role r = guild.getRoleById(id);
                     Member m = guild.getMemberById(id);
-                    User u = shardManagerSupp.get().getUserById(id);
+                    User u = shardManager().getUserById(id);
                     if (guildSettings.getAdminRoleIds().contains(id)) {
                         String roleName = r != null ? r.getName() : "unknown (role deleted ?)";
                         event.getChannel().sendMessage("Removing role " + roleName + " " + id + " from admins.").queue();
@@ -366,7 +372,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addIgnoredRoles(rolesToAdd));
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), gs -> gs.addIgnoredRoles(rolesToAdd));
             List<String> added = rolesToAdd.stream().map(r -> (IMentionable) r)
                     .map(IMentionable::getAsMention).collect(Collectors.toList());
 
@@ -375,7 +381,7 @@ public class CommandsListener extends ThreadedListener {
             List<Role> rolesToRemove = new ArrayList<>(msg.getMentions().getRoles());
             if (!rolesToRemove.isEmpty()) {
                 Role role = rolesToRemove.get(0);
-                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     if (guildSettings.isIgnoredRole(role)) {
                         event.getChannel().sendMessage("Removing role " + role.getName() + " " + role.getId() + " from ignored roles.").queue();
                     } else {
@@ -395,7 +401,7 @@ public class CommandsListener extends ThreadedListener {
 
             if (!roleIdsToRemove.isEmpty()) {
                 long roleId = roleIdsToRemove.get(0);
-                wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
+                wrapper.findApplyAndMerge(GuildSettings.key(guild), guildSettings -> {
                     Role role = guild.getRoleById(roleId);
                     if (guildSettings.isIgnoredRoleId(roleId)) {
                         String roleName = role != null ? role.getName() : "unknown (role deleted ?)";
@@ -420,7 +426,7 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("add role")) {
             String adjustedContent = content.replace("add role", "");
             //identify user
-            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManager());
             if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
@@ -446,7 +452,7 @@ public class CommandsListener extends ThreadedListener {
                 for (String str : adjustedContent.split("\\p{javaSpaceChar}+")) {
                     try {
                         long roleId = Long.parseUnsignedLong(str);
-                        Role role = shardManagerSupp.get().getRoleById(roleId);
+                        Role role = shardManager().getRoleById(roleId);
                         if (role != null) {
                             mentionedRoles.add(role);
                         }
@@ -501,7 +507,7 @@ public class CommandsListener extends ThreadedListener {
                 }
                 sb.append(r.getId()).append("\t").append(r.getName()).append("\n");
             }
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 out.add(sb.toString());
             }
 
@@ -526,13 +532,13 @@ public class CommandsListener extends ThreadedListener {
                 event.getChannel().sendMessage("I require the ban permission for this feature.").queue();
                 return;
             }
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::enableGlobalBans);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::enableGlobalBans);
             event.getChannel().sendMessage("Global bans have been enabled for this guild.").queue();
         } else if (content.contains("disable global bans")) {
-            wrapperSupp.get().findApplyAndMerge(GuildSettings.key(guild), GuildSettings::disableGlobalBans);
+            wrapper.findApplyAndMerge(GuildSettings.key(guild), GuildSettings::disableGlobalBans);
             event.getChannel().sendMessage("Global bans have been disabled for this guild.").queue();
         } else if (content.contains("list global bans")) {
-            List<GlobalBan> globalBans = wrapperSupp.get().loadAll(GlobalBan.class);
+            List<GlobalBan> globalBans = wrapper.loadAll(GlobalBan.class);
             globalBans.sort(Comparator.comparingLong(GlobalBan::getCreated));
 
             List<String> out = new ArrayList<>();
@@ -542,10 +548,10 @@ public class CommandsListener extends ThreadedListener {
                     out.add(sb.toString());
                     sb = new StringBuilder();
                 }
-                User bannedUser = shardManagerSupp.get().getUserById(ban.getUserId());
+                User bannedUser = shardManager().getUserById(ban.getUserId());
                 if (bannedUser == null) {
                     try {
-                        bannedUser = shardManagerSupp.get().getShardCache().iterator().next().retrieveUserById(ban.getUserId())
+                        bannedUser = shardManager().getShardCache().iterator().next().retrieveUserById(ban.getUserId())
                                 .submit().get(30, TimeUnit.SECONDS);
                     } catch (Exception ignored) {
                     }
@@ -557,7 +563,7 @@ public class CommandsListener extends ThreadedListener {
                         .append(name).append("\t")
                         .append(ban.getReason()).append("\n");
             }
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 out.add(sb.toString());
             }
 
@@ -585,7 +591,7 @@ public class CommandsListener extends ThreadedListener {
 
             String adjustedContent = content.replace("global ban", "");
             //identify user
-            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManager());
             if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
@@ -606,7 +612,7 @@ public class CommandsListener extends ThreadedListener {
                 return;
             }
 
-            wrapperSupp.get().findApplyAndMerge(GlobalBan.key(targetUser), ban -> ban.setReason(reason));
+            wrapper.findApplyAndMerge(GlobalBan.key(targetUser), ban -> ban.setReason(reason));
             event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
                     + " added to global bans with reason: **" + reason + "**").queue();
         } else if (content.contains("global mass ban")) {
@@ -626,12 +632,12 @@ public class CommandsListener extends ThreadedListener {
             }
 
             Set<User> usersToBan = Arrays.stream(userIds.split("\\p{javaSpaceChar}+"))
-                    .map(possibleUserId -> this.getUserFromId(possibleUserId, shardManagerSupp.get()))
+                .map(possibleUserId -> this.getUserFromId(possibleUserId, shardManager()))
                     .flatMap(Optional::stream)
                     .collect(Collectors.toSet());
 
             for (User userToBan : usersToBan) {
-                wrapperSupp.get().findApplyAndMerge(GlobalBan.key(userToBan), ban -> ban.setReason(reason));
+                wrapper.findApplyAndMerge(GlobalBan.key(userToBan), ban -> ban.setReason(reason));
             }
 
             event.getChannel().sendMessage("**" + usersToBan.size() + "** users added to global bans with reason: **" + reason + "**").queue();
@@ -643,7 +649,7 @@ public class CommandsListener extends ThreadedListener {
 
             String adjustedContent = content.replace("global unban", "");
             //identify user
-            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManager());
             if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
@@ -658,7 +664,7 @@ public class CommandsListener extends ThreadedListener {
             }
 
             User targetUser = mentionedUsers.iterator().next();
-            wrapperSupp.get().deleteEntity(GlobalBan.key(targetUser));
+            wrapper.deleteEntity(GlobalBan.key(targetUser));
             event.getChannel().sendMessage("User " + targetUser + " " + targetUser.getAsMention()
                     + " removed from global bans. You will still need "
                     + " individually unban them from any guilds they were banned in.").queue();
@@ -666,7 +672,7 @@ public class CommandsListener extends ThreadedListener {
             event.getChannel().sendMessage("This may take a while if there are many matches.").queue();
             //populate ban lists of all available servers
             Map<Guild, CompletableFuture<List<Guild.Ban>>> futures = new HashMap<>();
-            shardManagerSupp.get().getGuildCache().forEach(g -> {
+            shardManager().getGuildCache().forEach(g -> {
                 if (g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
                     futures.put(g, g.retrieveBanList().submit());
                 }
@@ -696,7 +702,7 @@ public class CommandsListener extends ThreadedListener {
                             .findAny();
                     ban.ifPresent(b -> userReport.append(banList.getKey().getName()).append(" with reason: ").append(b.getReason()).append("\n"));
                 }
-                if (userReport.length() > 0) {
+                if (!userReport.isEmpty()) {
                     found.incrementAndGet();
                     String user = "Member " + m.getAsMention() + " (" + m.getUser() + ") is banned in:\n";
                     event.getChannel().sendMessage(user + userReport).queue();
@@ -726,11 +732,11 @@ public class CommandsListener extends ThreadedListener {
 
             for (GuildChannel channel : channels) {
                 for (CustomEmoji customEmoji : customEmojis) {
-                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, customEmoji), Function.identity());
+                    this.wrapper.findApplyAndMerge(ReactionBan.key(channel, customEmoji), Function.identity());
                 }
 
                 for (String unicodeEmoji : unicodeEmojis) {
-                    this.wrapperSupp.get().findApplyAndMerge(ReactionBan.key(channel, unicodeEmoji), Function.identity());
+                    this.wrapper.findApplyAndMerge(ReactionBan.key(channel, unicodeEmoji), Function.identity());
                 }
             }
 
@@ -754,17 +760,17 @@ public class CommandsListener extends ThreadedListener {
 
             for (GuildChannel channel : channels) {
                 for (CustomEmoji emoji : customEmojis) {
-                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emoji));
+                    this.wrapper.deleteEntity(ReactionBan.key(channel, emoji));
                 }
 
                 for (String emoji : unicodeEmojis) {
-                    this.wrapperSupp.get().deleteEntity(ReactionBan.key(channel, emoji));
+                    this.wrapper.deleteEntity(ReactionBan.key(channel, emoji));
                 }
             }
 
             event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("list reaction bans")) {
-            List<ReactionBan> reactionBans = wrapperSupp.get().loadAll(ReactionBan.class).stream()
+            List<ReactionBan> reactionBans = wrapper.loadAll(ReactionBan.class).stream()
                 .filter(reactionBan -> guild.getTextChannelById(reactionBan.getId().getChannelId()) != null)
                 .toList();
 
@@ -847,7 +853,7 @@ public class CommandsListener extends ThreadedListener {
         } else if (content.contains("forget roles")) {
             String adjustedContent = content.replace("forget roles", "");
             //identify user
-            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManagerSupp.get());
+            Set<User> mentionedUsers = identifyUser(msg, adjustedContent, shardManager());
             if (mentionedUsers.isEmpty()) {
                 event.getChannel().sendMessage("Please mention a user or provide their user id anywhere in your message").queue();
                 return;
@@ -862,13 +868,13 @@ public class CommandsListener extends ThreadedListener {
             }
             User targetUser = mentionedUsers.iterator().next();
 
-            wrapperSupp.get().findApplyAndMerge(MemberRoles.key(guild, targetUser),
+            wrapper.findApplyAndMerge(MemberRoles.key(guild, targetUser),
                 memberRoles -> memberRoles.setRoleIds(List.of())
             );
             event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("status") || content.contains("config")) {
             String output = "";
-            GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
+            GuildSettings guildSettings = wrapper.getOrCreate(GuildSettings.key(guild));
 
             Long everyoneRoleId = guildSettings.getEveryoneRoleId();
             if (everyoneRoleId != null) {
@@ -926,7 +932,7 @@ public class CommandsListener extends ThreadedListener {
                 ignoredRolesStr.append("Role ").append(ignoredRoleId).append("\t").append(ignoredRole != null ? ignoredRole.getName() : "unknown (deleted ?)").append("\n");
             }
             output += "\n\nRoles that are ignored and will not be restored upon users rejoining:\n";
-            if (ignoredRolesStr.length() == 0) {
+            if (ignoredRolesStr.isEmpty()) {
                 output += "No ignored roles.";
             } else {
                 output += ignoredRolesStr.toString();
@@ -949,14 +955,14 @@ public class CommandsListener extends ThreadedListener {
                 if (m != null) {
                     name = m.getEffectiveName();
                 } else {
-                    User u = shardManagerSupp.get().getUserById(userId);
+                    User u = shardManager().getUserById(userId);
                     name = u != null ? u.getName() : "unknown (left ?)";
                 }
                 admins.append("Member ").append(userId).append("\t").append(name).append("\n");
             }
 
             output += "\n\nThe botowner and all users with " + Permission.ADMINISTRATOR.getName() + " permissions may control me.\n";
-            if (admins.length() == 0) {
+            if (admins.isEmpty()) {
                 output += "No other admins roles or members configured.\n";
             } else {
                 output += "Other admins:\n" + admins + "\n";

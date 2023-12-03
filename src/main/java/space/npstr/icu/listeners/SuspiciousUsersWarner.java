@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
@@ -36,6 +35,8 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
 import space.npstr.icu.AuditLogUtil;
 import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
@@ -46,6 +47,7 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * <p>
  * Warns guilds about users being banned in other guilds, or users with a fresh account joining.
  */
+@Component
 public class SuspiciousUsersWarner extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(SuspiciousUsersWarner.class);
@@ -53,11 +55,11 @@ public class SuspiciousUsersWarner extends ThreadedListener {
     private static final int MIN_ACCOUNT_AGE_MINUTES = 30;
 
     private final ReportingChannelFetcher reportingChannelFetcher;
-    private final Supplier<ShardManager> shardManagerSupp;
+    private final ObjectProvider<ShardManager> shardManager;
 
-    public SuspiciousUsersWarner(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
-        this.reportingChannelFetcher = new ReportingChannelFetcher(wrapperSupplier);
-        this.shardManagerSupp = shardManagerSupplier;
+    public SuspiciousUsersWarner(DatabaseWrapper wrapper, ObjectProvider<ShardManager> shardManager) {
+        this.reportingChannelFetcher = new ReportingChannelFetcher(wrapper);
+        this.shardManager = shardManager;
     }
 
     @Override
@@ -103,7 +105,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
         TextChannel reportingChannel = textChannel.get();
 
         Map<Guild, CompletableFuture<Guild.Ban>> banLists = new HashMap<>();
-        shardManagerSupp.get().getGuildCache().forEach(guild -> {
+        shardManager.getObject().getGuildCache().forEach(guild -> {
             if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
                 banLists.put(guild, guild.retrieveBan(event.getUser()).submit());
             }
@@ -139,7 +141,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             out.append("\n```");
         }
 
-        if (out.length() > 0) {
+        if (!out.isEmpty()) {
             String user = "User " + event.getUser().getAsMention() + " (" + event.getUser() + ") joined this server:\n";
             reportingChannel.sendMessage(user + out).queue();
         }

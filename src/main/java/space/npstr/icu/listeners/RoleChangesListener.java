@@ -18,7 +18,6 @@
 package space.npstr.icu.listeners;
 
 import java.util.Collection;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.dv8tion.jda.api.Permission;
@@ -33,6 +32,7 @@ import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameE
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.icu.db.entities.MemberRoles;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -43,16 +43,15 @@ import space.npstr.sqlsauce.fp.types.Transfiguration;
 /**
  * Created by napster on 27.12.17.
  */
+@Component
 public class RoleChangesListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(RoleChangesListener.class);
 
+    private final DatabaseWrapper wrapper;
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
-
-
-    public RoleChangesListener(Supplier<DatabaseWrapper> wrapperSupplier) {
-        this.wrapperSupp = wrapperSupplier;
+    public RoleChangesListener(DatabaseWrapper wrapper) {
+        this.wrapper = wrapper;
     }
 
     @Override
@@ -100,14 +99,14 @@ public class RoleChangesListener extends ThreadedListener {
 
 
     private void updateMember(Member member) {
-        wrapperSupp.get().findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
+        wrapper.findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
     }
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         getExecutor(event.getGuild()).execute(() -> {
             EntityKey<MemberComposite, MemberRoles> key = EntityKey.of(new MemberComposite(event.getMember()), MemberRoles.class);
-            MemberRoles memberRoles = wrapperSupp.get().getOrCreate(key);
+            MemberRoles memberRoles = wrapper.getOrCreate(key);
             Collection<Role> roles = memberRoles.getRoles(__ -> event.getGuild());
             String storedNick = memberRoles.getNickname();
             log.debug("User {} joined guild {}, restoring nickname {} and roles: {}",
@@ -128,7 +127,7 @@ public class RoleChangesListener extends ThreadedListener {
             }
 
             var guildSettingsKey = EntityKey.of(event.getGuild().getIdLong(), GuildSettings.class);
-            GuildSettings guildSettings = wrapperSupp.get().getOrCreate(guildSettingsKey);
+            GuildSettings guildSettings = wrapper.getOrCreate(guildSettingsKey);
             roles = roles.stream().filter(
                     role -> {
                         if (role.isManaged()) {
@@ -163,7 +162,7 @@ public class RoleChangesListener extends ThreadedListener {
             Stream<Transfiguration<MemberComposite, MemberRoles>> stream = event.getGuild().getMemberCache().stream()
                     .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
 
-            wrapperSupp.get().findApplyAndMergeAll(stream);
+            wrapper.findApplyAndMergeAll(stream);
         });
     }
 
@@ -174,7 +173,7 @@ public class RoleChangesListener extends ThreadedListener {
                     .flatMap(guild -> guild.getMemberCache().stream())
                     .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
 
-            wrapperSupp.get().findApplyAndMergeAll(stream);
+            wrapper.findApplyAndMergeAll(stream);
         });
     }
 }

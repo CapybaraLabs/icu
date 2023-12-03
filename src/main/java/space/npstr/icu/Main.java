@@ -28,16 +28,15 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
+import space.npstr.icu.db.DbManager;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.icu.info.GitRepoState;
-import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 27.12.17.
@@ -49,7 +48,6 @@ public class Main {
 
     private final DbManager dbManager;
     private final ShardManagerManager shardManagerManager;
-    private final GlobalBanSync globalBanSync;
 
     //use something constant as the key, like Main.class
     public static final Cache<Object, ApplicationInfo> APP_INFO = Caffeine.newBuilder()
@@ -85,23 +83,13 @@ public class Main {
         app.run(args);
     }
 
-    Main() {
+    Main(DbManager dbManager, ShardManagerManager shardManagerManager) {
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
 
-        dbManager = new DbManager();
-        shardManagerManager = new ShardManagerManager(this::getDbWrapper);
-        globalBanSync = new GlobalBanSync(this::getDbWrapper, this::getShardManager);
-
-        getShardManager();//call this to start the JDA loops
+        this.dbManager = dbManager;
+        this.shardManagerManager = shardManagerManager;
     }
 
-    public ShardManager getShardManager() {
-        return shardManagerManager.getShardManager();
-    }
-
-    public DatabaseWrapper getDbWrapper() {
-        return dbManager.getDefaultDbWrapper();
-    }
 
     @SuppressWarnings("ConstantConditions") //it can be null during init
     @Nullable

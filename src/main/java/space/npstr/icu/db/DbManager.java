@@ -15,17 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package space.npstr.icu;
+package space.npstr.icu.db;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 import net.ttddyy.dsproxy.listener.logging.SLF4JLogLevel;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 import org.hibernate.cfg.Environment;
 import org.hibernate.tool.schema.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import space.npstr.icu.Config;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.sqlsauce.DatabaseConnection;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -35,7 +36,7 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * <p>
  * Serves a lazily initialized database wrapper singletons
  */
-@ThreadSafe
+@Component
 public class DbManager {
 
     private static final Logger log = LoggerFactory.getLogger(DbManager.class);

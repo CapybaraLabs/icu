@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -37,6 +36,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.sqlsauce.DatabaseWrapper;
@@ -44,16 +44,17 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 /**
  * Created by napster on 11.03.18.
  */
+@Component
 public class GlobalBanSync {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalBanSync.class);
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
-    private final Supplier<ShardManager> shardManagerSupp;
+    private final DatabaseWrapper wrapper;
+    private final ShardManager shardManager;
 
-    public GlobalBanSync(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
-        this.wrapperSupp = wrapperSupplier;
-        this.shardManagerSupp = shardManagerSupplier;
+    public GlobalBanSync(DatabaseWrapper wrapper, ShardManager shardManager) {
+        this.wrapper = wrapper;
+        this.shardManager = shardManager;
 
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor(
@@ -62,8 +63,8 @@ public class GlobalBanSync {
 
         service.scheduleAtFixedRate(() -> {
             try {
-                List<GlobalBan> globalBans = Collections.unmodifiableList(wrapperSupp.get().loadAll(GlobalBan.class));
-                shardManagerSupp.get().getGuildCache().forEach(guild -> {
+                List<GlobalBan> globalBans = Collections.unmodifiableList(this.wrapper.loadAll(GlobalBan.class));
+                this.shardManager.getGuildCache().forEach(guild -> {
                     try {
                         syncGlobalBans(guild, globalBans);
                     } catch (Exception e) {
@@ -79,7 +80,7 @@ public class GlobalBanSync {
     private void syncGlobalBans(Guild guild, List<GlobalBan> globalBans)
             throws InterruptedException, ExecutionException, TimeoutException {
 
-        GuildSettings settings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
+        GuildSettings settings = wrapper.getOrCreate(GuildSettings.key(guild));
         if (!settings.areGlobalBansEnabled()) {
             return;
         }
