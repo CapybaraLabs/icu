@@ -17,7 +17,7 @@ ext {
 
 	jdaVersion              = '[5.0.0-beta.5, 5.1['
 	logbackVersion          = '[1.2.3, 2.0['
-	sentryVersion           = '[6.0.0, 7.0['
+	sentryVersion           = '[7.0.0, 8.0['
 	yamlVersion             = '[2.0, 3.0['
 	sqlsauceVersion         = '[0.4.3, 0.5['
 	hibernateVersion        = '5.4.27.Final'
