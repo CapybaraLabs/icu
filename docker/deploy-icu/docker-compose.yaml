@@ -2,10 +2,10 @@ version: '3.6'
 services:
 
   db:
-    image: napstr/poggres:15
+    image: napstr/poggres:16
     restart: always
     volumes:
-      - ./postgres-data/15/data:/var/lib/postgresql/data
+      - ./postgres-data/16/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=icu
       # See https://github.com/napstr/poggres#env-vars
