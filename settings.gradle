@@ -10,9 +10,9 @@ rootProject.name = 'icu'
 ext {
 	//@formatter:off
 
-	//plugin versions
+	springBootVersion       = '[3.2, 3.3['
+
 	gradleGitVersion        = '[2.4.0, 3.0['
-	shadowVersion           = '8.+'
 	versionsVersion         = '0.+'
 
 	jdaVersion              = '[5.0.0-beta.5, 5.1['
@@ -33,12 +33,17 @@ dependencyResolutionManagement {
 
 	versionCatalogs {
 		libs {
+			version("spring-boot", "$springBootVersion")
 			version("sqlsauce", "$sqlsauceVersion")
 
 			plugin("gitprops", "com.gorylenko.gradle-git-properties").version("$gradleGitVersion")
-			plugin("shadow", "com.github.johnrengelman.shadow").version("$shadowVersion")
+			plugin("spring", "org.springframework.boot").version("$springBootVersion")
 			plugin("versions", "com.github.ben-manes.versions").version("$versionsVersion")
 
+			library("spring-boot-bom", "org.springframework.boot", "spring-boot-dependencies").versionRef("spring-boot")
+			library("spring-boot-starter", "org.springframework.boot", "spring-boot-starter").withoutVersion()
+
+			// TODO delete versions provided by spring boot bom
 			library("jda", "net.dv8tion:JDA:$jdaVersion")
 			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
 			library("sentry", "io.sentry:sentry-logback:$sentryVersion")

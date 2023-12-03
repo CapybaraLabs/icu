@@ -11,7 +11,7 @@ plugins {
     id 'java'
     id 'application'
     alias(libs.plugins.gitprops)
-    alias(libs.plugins.shadow)
+    alias(libs.plugins.spring)
     alias(libs.plugins.versions)
 }
 
@@ -36,7 +36,9 @@ repositories {
 
 
 dependencies {
-    //@formatter:off
+    implementation platform(libs.spring.boot.bom)
+
+    implementation libs.spring.boot.starter
 
     implementation libs.jda
     implementation libs.logback
@@ -48,16 +50,22 @@ dependencies {
     implementation libs.annotations
     implementation libs.jaxb
     implementation libs.dsproxy
-
-    //@formatter:on
 }
 
-compileJava.dependsOn 'clean'
-compileJava.options.encoding = 'UTF-8'
-compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+tasks.withType(JavaCompile).configureEach {
+    dependsOn(processResources)
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
 
-shadowJar {
+bootJar {
     archiveFileName.set("icu.jar")
+    doLast {
+        copy {
+            from 'build/libs/icu.jar'
+            into '.'
+        }
+    }
 }
 
 processResources {

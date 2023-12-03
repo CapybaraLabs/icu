@@ -20,25 +20,29 @@ package space.npstr.icu;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.boot.context.event.ApplicationFailedEvent;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.icu.info.GitRepoState;
 import space.npstr.sqlsauce.DatabaseWrapper;
 
-import javax.annotation.Nullable;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Created by napster on 27.12.17.
  */
+@SpringBootApplication
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
@@ -52,7 +56,7 @@ public class Main {
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
 
-    public static void main(final String[] args) {
+    public static void main(String[] args) {
         //just post the info to the console
         if (args.length > 0 &&
                 (args[0].equalsIgnoreCase("-v")
@@ -64,12 +68,25 @@ public class Main {
             System.exit(0);
         }
 
-        new Main();
+        System.setProperty("spring.config.name", "icu");
+        SpringApplication app = new SpringApplication(Main.class);
+        app.addListeners(
+            event -> {
+                if (event instanceof ApplicationEnvironmentPreparedEvent) {
+                    log.info(getVersionInfo());
+                }
+            },
+            event -> {
+                if (event instanceof ApplicationFailedEvent failed) {
+                    log.error("Application failed", failed.getException());
+                }
+            }
+        );
+        app.run(args);
     }
 
-    private Main() {
+    Main() {
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
-        log.info(getVersionInfo());
 
         dbManager = new DbManager();
         shardManagerManager = new ShardManagerManager(this::getDbWrapper);
@@ -138,13 +155,13 @@ public class Main {
     private static String getVersionInfo() {
 
         return "\n\n"
-                + "\n\tVersion:       " + AppInfo.getAppInfo().VERSION
-                + "\n\tBuild:         " + AppInfo.getAppInfo().BUILD_NUMBER
-                + "\n\tBuild time:    " + asTimeInCentralEurope(AppInfo.getAppInfo().BUILD_TIME)
-                + "\n\tCommit:        " + GitRepoState.getGitRepositoryState().commitIdAbbrev + " (" + GitRepoState.getGitRepositoryState().branch + ")"
-                + "\n\tCommit time:   " + asTimeInCentralEurope(GitRepoState.getGitRepositoryState().commitTime * 1000)
-                + "\n\tJVM:           " + System.getProperty("java.version")
-                + "\n\tJDA:           " + JDAInfo.VERSION
-                + "\n";
+            + "\n\tVersion:       " + AppInfo.getAppInfo().VERSION
+            + "\n\tBuild:         " + AppInfo.getAppInfo().BUILD_NUMBER
+            + "\n\tBuild time:    " + asTimeInCentralEurope(AppInfo.getAppInfo().BUILD_TIME)
+            + "\n\tCommit:        " + GitRepoState.getGitRepositoryState().commitIdAbbrev + " (" + GitRepoState.getGitRepositoryState().branch + ")"
+            + "\n\tCommit time:   " + asTimeInCentralEurope(GitRepoState.getGitRepositoryState().commitTime * 1000)
+            + "\n\tJVM:           " + System.getProperty("java.version")
+            + "\n\tJDA:           " + JDAInfo.VERSION
+            + "\n";
     }
 }
