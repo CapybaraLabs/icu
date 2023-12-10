@@ -6,6 +6,7 @@ logs/*
 
 # secret files
 *sneaky.yaml
+icu-secrets.yaml
 
 # some development environment stuff, these makes intellij ultimate's persistence stuff work
 *hibernate.cfg.xml

@@ -32,7 +32,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.lang.Nullable;
+import space.npstr.icu.discord.DiscordProperties;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.icu.info.GitRepoState;
 
@@ -40,6 +42,9 @@ import space.npstr.icu.info.GitRepoState;
  * Created by napster on 27.12.17.
  */
 @SpringBootApplication
+@EnableConfigurationProperties({
+    DiscordProperties.class,
+})
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
@@ -65,6 +70,8 @@ public class Main {
 
         System.setProperty("spring.config.name", "icu");
         SpringApplication app = new SpringApplication(Main.class);
+        app.setAdditionalProfiles("secrets");
+
         app.addListeners(
             event -> {
                 if (event instanceof ApplicationEnvironmentPreparedEvent) {

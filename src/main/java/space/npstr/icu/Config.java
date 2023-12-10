@@ -48,7 +48,6 @@ public class Config {
         C = c;
     }
 
-    public final String discordToken;
     public final String sentryDsn;
 
     public Config() throws IOException {
@@ -59,9 +58,6 @@ public class Config {
             final Map<String, Object> sneaky = yaml.load(reader);
             //change nulls to empty strings
             sneaky.keySet().forEach((String key) -> sneaky.putIfAbsent(key, ""));
-
-            //sneaky stuff
-            this.discordToken = (String) sneaky.getOrDefault("discordToken", "");
 
             this.sentryDsn = (String) sneaky.getOrDefault("sentryDsn", "");
             new SentryConfiguration(sentryDsn).init();

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import space.npstr.icu.discord.DiscordProperties;
 import space.npstr.icu.listeners.ThreadedListener;
 
 /**
@@ -42,12 +43,14 @@ public class ShardManagerManager {
 
     private static final Logger log = LoggerFactory.getLogger(ShardManagerManager.class);
 
+    private final DiscordProperties discordProperties;
     private final List<ThreadedListener> listeners;
     @Nullable
     private volatile ShardManager shardManager;
     private final Object shardManagerInitLock = new Object();
 
-    public ShardManagerManager(List<ThreadedListener> listeners) {
+    public ShardManagerManager(DiscordProperties discordProperties, List<ThreadedListener> listeners) {
+        this.discordProperties = discordProperties;
         this.listeners = listeners;
     }
 
@@ -73,9 +76,9 @@ public class ShardManagerManager {
         }
     }
 
-    private static ShardManager initShardManager(Collection<? extends ListenerAdapter> listeners) {
+    private ShardManager initShardManager(Collection<? extends ListenerAdapter> listeners) {
         DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
-            .createDefault(Config.C.discordToken)
+            .createDefault(discordProperties.token())
             .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
             .setMemberCachePolicy(MemberCachePolicy.ALL)
             .setChunkingFilter(ChunkingFilter.ALL)
