@@ -17,13 +17,16 @@
 
 package space.npstr.icu.discord;
 
-import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.concurrent.TimeUnit;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import space.npstr.icu.db.entities.GuildSettingsRepository;
 
@@ -32,16 +35,23 @@ public class AdminService {
 
 	private final GuildSettingsRepository guildSettingsRepo;
 
-	private final Cache<Object, ApplicationInfo> applicationInfoCache = Caffeine.newBuilder()
-		.refreshAfterWrite(1, TimeUnit.HOURS)
-		.build();
+	private final AsyncLoadingCache<Object, ApplicationInfo> applicationInfoCache;
 
-	public AdminService(GuildSettingsRepository guildSettingsRepo) {
+	public AdminService(GuildSettingsRepository guildSettingsRepo, ObjectProvider<ShardManager> shardManager) {
 		this.guildSettingsRepo = guildSettingsRepo;
+
+		this.applicationInfoCache = Caffeine.newBuilder()
+			.refreshAfterWrite(1, TimeUnit.HOURS)
+			.buildAsync((__, ___) -> {
+				JDA jda = shardManager.getObject().getShards().stream()
+					.filter(it -> it.getStatus() == JDA.Status.CONNECTED)
+					.findAny().orElseThrow();
+				return jda.retrieveApplicationInfo().submit();
+			});
 	}
 
 	public boolean isBotOwner(User user) {
-		ApplicationInfo appInfo = applicationInfoCache.get("foo", __ -> user.getJDA().retrieveApplicationInfo().complete());
+		ApplicationInfo appInfo = applicationInfoCache.get("foo").join();
 		return appInfo != null
 			&& appInfo.getOwner().getIdLong() == user.getIdLong();
 	}
