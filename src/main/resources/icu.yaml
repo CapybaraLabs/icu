@@ -1,3 +1,14 @@
+logging:
+  file.name: './logs/icu.log'
+  logback.rollingpolicy.max-history: 30
+  logback.rollingpolicy.max-file-size: 1GB
+
+  pattern:
+    level: "[%mdc] %5p"
+
+  level:
+    root: INFO
+
 sentry:
   dsn: ""
   logging.enabled: false
@@ -11,7 +22,11 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/icu?user=icu&password=icu
   main:
+    banner-mode: log
     lazy-initialization: false
   jpa:
     hibernate:
       ddl-auto: update
+  output:
+    ansi:
+      enabled: always
