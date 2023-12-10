@@ -1,3 +1,8 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/icu?user=icu&password=icu
   main:
     lazy-initialization: false
+  jpa:
+    hibernate:
+      ddl-auto: update

@@ -26,7 +26,8 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.stereotype.Component;
 import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
+import space.npstr.icu.discord.AdminService;
 
 /**
  * Created by napster on 25.01.18.
@@ -36,10 +37,12 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 @Component
 public class EveryoneHereListener extends ThreadedListener {
 
-    private final DatabaseWrapper wrapper;
+    private final AdminService adminService;
+    private final GuildSettingsRepository guildSettingsRepo;
 
-    public EveryoneHereListener(DatabaseWrapper wrapper) {
-        this.wrapper = wrapper;
+    public EveryoneHereListener(AdminService adminService, GuildSettingsRepository guildSettingsRepo) {
+        this.adminService = adminService;
+        this.guildSettingsRepo = guildSettingsRepo;
     }
 
     @Override
@@ -59,15 +62,15 @@ public class EveryoneHereListener extends ThreadedListener {
             return;
         }
         Guild guild = event.getGuild();
-        GuildSettings guildSettings = wrapper.getOrCreate(GuildSettings.key(guild));
 
         //dont troll admins
-        if (CommandsListener.isAdmin(wrapper, member)) {
+        if (adminService.isAdmin(member)) {
             return;
         }
 
         Message msg = event.getMessage();
 
+        GuildSettings guildSettings = guildSettingsRepo.findOrCreateByGuild(guild);
         Long hereId = guildSettings.getHereRoleId();
         Role hereRole = hereId != null ? guild.getRoleById(hereId) : null;
         if (hereRole != null

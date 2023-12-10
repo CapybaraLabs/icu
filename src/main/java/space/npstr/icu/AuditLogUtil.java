@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,6 +17,9 @@
 
 package space.npstr.icu;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
@@ -26,11 +29,6 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.CheckReturnValue;
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by napster on 16.05.18.
@@ -45,7 +43,6 @@ public class AuditLogUtil {
     private AuditLogUtil() {}
 
 
-    @CheckReturnValue
     public static Optional<String> getBanReason(Guild guild, User user, OffsetDateTime banTime) {
         return getReasonFromBanlist(guild, user)
                 .or(() -> getAuditLogEntry(guild, user, ActionType.BAN, banTime)
@@ -53,18 +50,15 @@ public class AuditLogUtil {
     }
 
     //return the person that unbanned a user
-    @CheckReturnValue
     public static Optional<User> getUnbanner(Guild guild, User user, OffsetDateTime unbanTime) {
         return getAuditLogEntry(guild, user, ActionType.UNBAN, unbanTime)
                 .map(AuditLogEntry::getUser);
     }
 
-    @CheckReturnValue
     public static Optional<AuditLogEntry> getKickEntry(Guild guild, User user, OffsetDateTime leaveTime) {
         return getAuditLogEntry(guild, user, ActionType.KICK, leaveTime);
     }
 
-    @CheckReturnValue
     private static Optional<String> getReasonFromBanlist(Guild guild, User user) {
         if (guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             try {
@@ -83,7 +77,6 @@ public class AuditLogUtil {
 
     //get a reason from the audit log of a guild for the provided user and actiontype
     //returns empty if we are missing the rights to do this
-    @CheckReturnValue
     private static Optional<AuditLogEntry> getAuditLogEntry(Guild guild, User user, ActionType actionType, OffsetDateTime eventTime) {
         if (guild.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
             try {

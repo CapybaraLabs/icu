@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -16,8 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@space.npstr.annotations.FieldsAreNonNullByDefault
-@space.npstr.annotations.ParametersAreNonnullByDefault
-@space.npstr.annotations.ReturnTypesAreNonNullByDefault
-
+@NonNullApi
 package space.npstr.icu.listeners;
+
+import org.springframework.lang.NonNullApi;

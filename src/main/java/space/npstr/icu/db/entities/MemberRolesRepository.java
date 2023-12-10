@@ -15,18 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package space.npstr.icu.discord;
+package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.sharding.ShardManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import space.npstr.icu.ShardManagerManager;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Configuration
-public class DiscordConfig {
+public interface MemberRolesRepository extends JpaRepository<MemberRoles, MemberRoles.MemberComposite> {
 
-	@Bean
-	public ShardManager shardManager(ShardManagerManager shardManagerManager) {
-		return shardManagerManager.getShardManager();
+	default MemberRoles findOrCreateById(MemberRoles.MemberComposite id) {
+		return findById(id)
+			.orElseGet(() -> this.save(new MemberRoles(id)));
 	}
+
 }

@@ -19,7 +19,6 @@ package space.npstr.icu;
 
 import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -29,6 +28,7 @@ import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import space.npstr.icu.listeners.ThreadedListener;
 

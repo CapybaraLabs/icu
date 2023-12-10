@@ -19,12 +19,8 @@ ext {
 	logbackVersion          = '[1.2.3, 2.0['
 	sentryVersion           = '[7.0.0, 8.0['
 	yamlVersion             = '[2.0, 3.0['
-	sqlsauceVersion         = '[0.4.3, 0.5['
-	hibernateVersion        = '5.4.27.Final'
-	annotationsVersion      = '[0.0.1, 0.1['
-	jaxbApiVersion          = '[2.3.1, 3.0['
 	caffeineVersion         = '[3.0.1, 4.0['
-	dsProxyVersion          = '[1.5.1, 2.0['
+	findbugsVersion			= '[3.0.2, 4.0['
 
 	//@formatter:on
 }
@@ -34,7 +30,6 @@ dependencyResolutionManagement {
 	versionCatalogs {
 		libs {
 			version("spring-boot", "$springBootVersion")
-			version("sqlsauce", "$sqlsauceVersion")
 
 			plugin("gitprops", "com.gorylenko.gradle-git-properties").version("$gradleGitVersion")
 			plugin("spring", "org.springframework.boot").version("$springBootVersion")
@@ -42,18 +37,16 @@ dependencyResolutionManagement {
 
 			library("spring-boot-bom", "org.springframework.boot", "spring-boot-dependencies").versionRef("spring-boot")
 			library("spring-boot-starter", "org.springframework.boot", "spring-boot-starter").withoutVersion()
+			library("spring-boot-starter-data-jpa", "org.springframework.boot", "spring-boot-starter-data-jpa").withoutVersion()
 
 			// TODO delete versions provided by spring boot bom
 			library("jda", "net.dv8tion:JDA:$jdaVersion")
 			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
 			library("sentry", "io.sentry:sentry-logback:$sentryVersion")
 			library("yaml", "org.yaml:snakeyaml:$yamlVersion")
-			library("sqlsauce-core", "space.npstr.SqlSauce", "sqlsauce-core").versionRef("sqlsauce")
-			library("sqlsauce-discord", "space.npstr.SqlSauce", "discord-entities").versionRef("sqlsauce")
+			library("postgresql", "org.postgresql", "postgresql").withoutVersion()
 			library("caffeine", "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
-			library("annotations", "space.npstr:annotations:$annotationsVersion")
-			library("jaxb", "javax.xml.bind:jaxb-api:$jaxbApiVersion")
-			library("dsproxy", "net.ttddyy:datasource-proxy:$dsProxyVersion")
+			library("findbugs", "com.google.code.findbugs:jsr305:$findbugsVersion")
 		}
 	}
 }

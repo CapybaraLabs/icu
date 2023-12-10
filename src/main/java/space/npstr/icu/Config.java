@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -49,7 +49,6 @@ public class Config {
     }
 
     public final String discordToken;
-    public final String jdbcUrl;
     public final String sentryDsn;
 
     public Config() throws IOException {
@@ -63,14 +62,6 @@ public class Config {
 
             //sneaky stuff
             this.discordToken = (String) sneaky.getOrDefault("discordToken", "");
-
-            String jdbc = (String) sneaky.getOrDefault("jdbcUrl", "");
-            if (jdbc == null || jdbc.isEmpty()) {
-                log.info("No jdbc url configured, using default docker one");
-                jdbcUrl = "jdbc:postgresql://db:5432/icu?user=icu&password=icu";
-            } else {
-                jdbcUrl = jdbc;
-            }
 
             this.sentryDsn = (String) sneaky.getOrDefault("sentryDsn", "");
             new SentryConfiguration(sentryDsn).init();

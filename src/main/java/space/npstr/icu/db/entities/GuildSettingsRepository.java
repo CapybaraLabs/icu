@@ -15,18 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package space.npstr.icu.discord;
+package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.sharding.ShardManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import space.npstr.icu.ShardManagerManager;
+import net.dv8tion.jda.api.entities.Guild;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@Configuration
-public class DiscordConfig {
+@Repository
+public interface GuildSettingsRepository extends JpaRepository<GuildSettings, Long> {
 
-	@Bean
-	public ShardManager shardManager(ShardManagerManager shardManagerManager) {
-		return shardManagerManager.getShardManager();
+	default GuildSettings findOrCreateByGuild(Guild guild) {
+		return findById(guild.getIdLong())
+			.orElseGet(() -> this.save(new GuildSettings(guild.getIdLong())));
 	}
 }

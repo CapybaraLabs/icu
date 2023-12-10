@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -33,8 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
-import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
 
 /**
  * Created by napster on 13.02.18.
@@ -47,11 +46,11 @@ public class MemberRoleManager extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(MemberRoleManager.class);
 
-    private final DatabaseWrapper wrapper;
+    private final GuildSettingsRepository guildSettingsRepo;
     private final ObjectProvider<ShardManager> shardManager;
 
-    public MemberRoleManager(DatabaseWrapper wrapper, ObjectProvider<ShardManager> shardManager) {
-        this.wrapper = wrapper;
+    public MemberRoleManager(GuildSettingsRepository guildSettingsRepo, ObjectProvider<ShardManager> shardManager) {
+        this.guildSettingsRepo = guildSettingsRepo;
         this.shardManager = shardManager;
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor(
@@ -85,7 +84,7 @@ public class MemberRoleManager extends ThreadedListener {
 
 
     private void assignMemberRole(Guild guild, Stream<Member> members) {
-        Long roleId = wrapper.getOrCreate(GuildSettings.key(guild)).getMemberRoleId();
+        Long roleId = guildSettingsRepo.findOrCreateByGuild(guild).getMemberRoleId();
         if (roleId == null) { //no member role configured
             return;
         }

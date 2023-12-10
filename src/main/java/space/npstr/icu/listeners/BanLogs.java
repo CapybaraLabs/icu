@@ -19,7 +19,6 @@ package space.npstr.icu.listeners;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
-import javax.annotation.CheckReturnValue;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -30,8 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import space.npstr.icu.AuditLogUtil;
-import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
 
 /**
  * Created by napster on 16.05.18.
@@ -41,10 +39,10 @@ public class BanLogs extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(BanLogs.class);
 
-    private final DatabaseWrapper wrapper;
+    private final GuildSettingsRepository guildSettingsRepo;
 
-    public BanLogs(DatabaseWrapper wrapper) {
-        this.wrapper = wrapper;
+    public BanLogs(GuildSettingsRepository guildSettingsRepo) {
+        this.guildSettingsRepo = guildSettingsRepo;
     }
 
 
@@ -112,9 +110,8 @@ public class BanLogs extends ThreadedListener {
 
     //returns the log channel where we can post in of the provided guild
     // and takes appropriate measures if it failed to do so
-    @CheckReturnValue
     private Optional<TextChannel> fetchWorkingLogChannel(Guild guild) {
-        Long logChannelId = wrapper.getOrCreate(GuildSettings.key(guild)).getLogChannelId();
+        Long logChannelId = guildSettingsRepo.findOrCreateByGuild(guild).getLogChannelId();
         if (logChannelId == null) {
             return Optional.empty();
         }

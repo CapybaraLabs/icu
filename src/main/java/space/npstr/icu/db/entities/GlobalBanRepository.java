@@ -15,18 +15,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package space.npstr.icu.discord;
+package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.sharding.ShardManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import space.npstr.icu.ShardManagerManager;
+import net.dv8tion.jda.api.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@Configuration
-public class DiscordConfig {
+@Repository
+public interface GlobalBanRepository extends JpaRepository<GlobalBan, Long> {
 
-	@Bean
-	public ShardManager shardManager(ShardManagerManager shardManagerManager) {
-		return shardManagerManager.getShardManager();
+	default GlobalBan findOrCreateByUser(User user) {
+		return findById(user.getIdLong())
+			.orElseGet(() -> this.save(new GlobalBan(user.getIdLong())));
+	}
+
+	default void deleteByUser(User user) {
+		deleteById(user.getIdLong());
 	}
 }

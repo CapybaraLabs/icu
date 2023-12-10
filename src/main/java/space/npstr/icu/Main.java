@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,6 @@
 
 package space.npstr.icu;
 
-import ch.qos.logback.classic.LoggerContext;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Instant;
@@ -25,7 +24,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import org.slf4j.Logger;
@@ -34,7 +32,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
-import space.npstr.icu.db.DbManager;
+import org.springframework.lang.Nullable;
 import space.npstr.icu.info.AppInfo;
 import space.npstr.icu.info.GitRepoState;
 
@@ -46,7 +44,6 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    private final DbManager dbManager;
     private final ShardManagerManager shardManagerManager;
 
     //use something constant as the key, like Main.class
@@ -83,10 +80,9 @@ public class Main {
         app.run(args);
     }
 
-    Main(DbManager dbManager, ShardManagerManager shardManagerManager) {
+    Main(ShardManagerManager shardManagerManager) {
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
 
-        this.dbManager = dbManager;
         this.shardManagerManager = shardManagerManager;
     }
 
@@ -95,12 +91,6 @@ public class Main {
     @Nullable
     private ShardManagerManager getShardManagerManager() {
         return shardManagerManager;
-    }
-
-    @SuppressWarnings("ConstantConditions") //it can be null during init
-    @Nullable
-    private DbManager getDbManager() {
-        return dbManager;
     }
 
     @SuppressWarnings("FieldCanBeLocal")
@@ -113,15 +103,6 @@ public class Main {
         ShardManagerManager smm = getShardManagerManager();
         if (smm != null) smm.shutdown();
 
-        //shutdown DB
-        log.info("Shutting down database");
-        DbManager dbm = getDbManager();
-        if (dbm != null) dbm.shutdown();
-
-        //shutdown logback logger
-        log.info("Shutting down logger :rip:");
-        final LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
     }, "shutdown-hook");
 
     public static final DateTimeFormatter TIME_IN_CENTRAL_EUROPE = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss z")

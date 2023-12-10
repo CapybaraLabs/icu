@@ -27,10 +27,10 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Component;
-import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
 import space.npstr.icu.db.entities.ReactionBan;
+import space.npstr.icu.db.entities.ReactionBanRepository;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
-import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 01.05.19.
@@ -38,18 +38,20 @@ import space.npstr.sqlsauce.DatabaseWrapper;
 @Component
 public class ReactionBanListener extends ListenerAdapter {
 
-    private final DatabaseWrapper wrapper;
+    private final GuildSettingsRepository guildSettingsRepo;
+    private final ReactionBanRepository reactionBanRepo;
     private final ReportingChannelFetcher reportingChannelFetcher;
 
 
-    public ReactionBanListener(DatabaseWrapper wrapper) {
-        this.wrapper = wrapper;
-        this.reportingChannelFetcher = new ReportingChannelFetcher(wrapper);
+    public ReactionBanListener(GuildSettingsRepository guildSettingsRepo, ReactionBanRepository reactionBanRepo, ReportingChannelFetcher reportingChannelFetcher) {
+        this.guildSettingsRepo = guildSettingsRepo;
+        this.reactionBanRepo = reactionBanRepo;
+        this.reportingChannelFetcher = reportingChannelFetcher;
     }
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
-        Optional.ofNullable(wrapper.getEntity(ReactionBan.key(event.getChannel(), event.getReaction().getEmoji())))
+        this.reactionBanRepo.findById(ReactionBan.key(event.getChannel(), event.getReaction().getEmoji()))
             .ifPresent(ban -> {
                 User user = event.getUser();
                 if (user == null) {
@@ -69,8 +71,7 @@ public class ReactionBanListener extends ListenerAdapter {
         GuildMessageChannel channel = event.getChannel().asGuildMessageChannel();
         if (!guild.getSelfMember().hasPermission(channel, Permission.MESSAGE_MANAGE)) {
             //try to report the issue
-            GuildSettings settings = wrapper.getOrCreate(GuildSettings.key(guild));
-            Long reportingChannelId = settings.getReportingChannelId();
+            Long reportingChannelId = guildSettingsRepo.findOrCreateByGuild(guild).getReportingChannelId();
             if (reportingChannelId != null) {
                 TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
                 if (reportingChannel != null) {
@@ -87,8 +88,7 @@ public class ReactionBanListener extends ListenerAdapter {
     private void issueBan(Guild guild, User user, ReactionBan reactionBan) {
         if (!guild.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             //try to report the issue
-            GuildSettings settings = wrapper.getOrCreate(GuildSettings.key(guild));
-            Long reportingChannelId = settings.getReportingChannelId();
+            Long reportingChannelId = guildSettingsRepo.findOrCreateByGuild(guild).getReportingChannelId();
             if (reportingChannelId != null) {
                 TextChannel reportingChannel = guild.getTextChannelById(reportingChannelId);
                 if (reportingChannel != null) {

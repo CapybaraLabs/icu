@@ -39,17 +39,15 @@ dependencies {
     implementation platform(libs.spring.boot.bom)
 
     implementation libs.spring.boot.starter
+    implementation libs.spring.boot.starter.data.jpa
 
     implementation libs.jda
     implementation libs.logback
     implementation libs.sentry
     implementation libs.yaml
-    implementation libs.sqlsauce.core
-    implementation libs.sqlsauce.discord
+    runtimeOnly libs.postgresql
     implementation libs.caffeine
-    implementation libs.annotations
-    implementation libs.jaxb
-    implementation libs.dsproxy
+    compileOnly libs.findbugs // to avoid warning about some missing annotations
 }
 
 tasks.withType(JavaCompile).configureEach {

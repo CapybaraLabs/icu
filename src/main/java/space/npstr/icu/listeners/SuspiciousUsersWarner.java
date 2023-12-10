@@ -40,7 +40,6 @@ import org.springframework.stereotype.Component;
 import space.npstr.icu.AuditLogUtil;
 import space.npstr.icu.Main;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
-import space.npstr.sqlsauce.DatabaseWrapper;
 
 /**
  * Created by napster on 10.03.18.
@@ -57,8 +56,8 @@ public class SuspiciousUsersWarner extends ThreadedListener {
     private final ReportingChannelFetcher reportingChannelFetcher;
     private final ObjectProvider<ShardManager> shardManager;
 
-    public SuspiciousUsersWarner(DatabaseWrapper wrapper, ObjectProvider<ShardManager> shardManager) {
-        this.reportingChannelFetcher = new ReportingChannelFetcher(wrapper);
+    public SuspiciousUsersWarner(ReportingChannelFetcher reportingChannelFetcher, ObjectProvider<ShardManager> shardManager) {
+        this.reportingChannelFetcher = reportingChannelFetcher;
         this.shardManager = shardManager;
     }
 

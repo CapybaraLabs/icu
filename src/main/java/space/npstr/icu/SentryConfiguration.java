@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Dennis Neufeld
+ * Copyright (C) 2018 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -21,9 +21,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import io.sentry.Sentry;
 import io.sentry.logback.SentryAppender;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import space.npstr.icu.info.GitRepoState;
 
 
