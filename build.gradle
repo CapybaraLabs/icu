@@ -44,6 +44,7 @@ dependencies {
     implementation libs.jda
     implementation libs.logback
     implementation libs.sentry
+    implementation libs.sentry.spring.starter
     implementation libs.yaml
     runtimeOnly libs.postgresql
     implementation libs.caffeine

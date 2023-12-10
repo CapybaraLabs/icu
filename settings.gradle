@@ -43,6 +43,7 @@ dependencyResolutionManagement {
 			library("jda", "net.dv8tion:JDA:$jdaVersion")
 			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
 			library("sentry", "io.sentry:sentry-logback:$sentryVersion")
+			library("sentry-spring-starter", "io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
 			library("yaml", "org.yaml:snakeyaml:$yamlVersion")
 			library("postgresql", "org.postgresql", "postgresql").withoutVersion()
 			library("caffeine", "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
