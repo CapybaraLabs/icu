@@ -7,10 +7,6 @@ logs/*
 # secret files
 icu-secrets.yaml
 
-# some development environment stuff, these makes intellij ultimate's persistence stuff work
-*hibernate.cfg.xml
-*persistence.xml
-
 # common symlinks
 icu.jar
 
