@@ -16,10 +16,7 @@ ext {
 	versionsVersion         = '0.+'
 
 	jdaVersion              = '[5.0.0-beta.5, 5.1['
-	logbackVersion          = '[1.2.3, 2.0['
 	sentryVersion           = '[7.0.0, 8.0['
-	yamlVersion             = '[2.0, 3.0['
-	caffeineVersion         = '[3.0.1, 4.0['
 	findbugsVersion			= '[3.0.2, 4.0['
 
 	//@formatter:on
@@ -39,14 +36,12 @@ dependencyResolutionManagement {
 			library("spring-boot-starter", "org.springframework.boot", "spring-boot-starter").withoutVersion()
 			library("spring-boot-starter-data-jpa", "org.springframework.boot", "spring-boot-starter-data-jpa").withoutVersion()
 
-			// TODO delete versions provided by spring boot bom
 			library("jda", "net.dv8tion:JDA:$jdaVersion")
-			library("logback", "ch.qos.logback:logback-classic:$logbackVersion")
+			library("logback", "ch.qos.logback", "logback-classic").withoutVersion()
 			library("sentry", "io.sentry:sentry-logback:$sentryVersion")
 			library("sentry-spring-starter", "io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
-			library("yaml", "org.yaml:snakeyaml:$yamlVersion")
 			library("postgresql", "org.postgresql", "postgresql").withoutVersion()
-			library("caffeine", "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+			library("caffeine", "com.github.ben-manes.caffeine", "caffeine").withoutVersion()
 			library("findbugs", "com.google.code.findbugs:jsr305:$findbugsVersion")
 		}
 	}

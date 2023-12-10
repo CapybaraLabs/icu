@@ -41,7 +41,6 @@ dependencies {
     implementation libs.logback
     implementation libs.sentry
     implementation libs.sentry.spring.starter
-    implementation libs.yaml
     runtimeOnly libs.postgresql
     implementation libs.caffeine
     compileOnly libs.findbugs // to avoid warning about some missing annotations
