@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./sneaky.yaml:/opt/icu/sneaky.yaml
+      - ./icu-secrets.yaml:/opt/icu/icu-secrets.yaml:ro
       - ./logs:/opt/icu/logs
       - ./logs/gc:/opt/icu/logs/gc
     ports:
