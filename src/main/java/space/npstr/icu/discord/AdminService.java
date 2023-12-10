@@ -22,7 +22,7 @@ import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import org.springframework.stereotype.Service;
-import space.npstr.icu.Main;
+import space.npstr.icu.Launcher;
 import space.npstr.icu.db.entities.GuildSettingsRepository;
 
 @Service
@@ -35,7 +35,7 @@ public class AdminService {
 	}
 
 	public boolean isBotOwner(User user) {
-		ApplicationInfo appInfo = Main.APP_INFO.get(Main.class, __ -> user.getJDA().retrieveApplicationInfo().complete());
+		ApplicationInfo appInfo = Launcher.APP_INFO.get(Launcher.class, __ -> user.getJDA().retrieveApplicationInfo().complete());
 		return appInfo != null
 			&& appInfo.getOwner().getIdLong() == user.getIdLong();
 	}

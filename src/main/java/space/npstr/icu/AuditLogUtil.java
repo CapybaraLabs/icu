@@ -64,7 +64,7 @@ public class AuditLogUtil {
             try {
                 return Optional.ofNullable(guild.retrieveBan(user).submit().join().getReason());
             } catch (Exception e) {
-                Throwable realCause = Main.unwrap(e);
+                Throwable realCause = Launcher.unwrap(e);
                 if (!(realCause instanceof ErrorResponseException)
                     || ((ErrorResponseException) realCause).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
                     log.error("Failed to get ban reason for banned user {} of guild {} through the ban list",

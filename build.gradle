@@ -18,10 +18,6 @@ plugins {
 group 'space.npstr.icu'
 version '0.1.0-SNAPSHOT'
 
-application {
-    mainClass = 'space.npstr.icu.Main'
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

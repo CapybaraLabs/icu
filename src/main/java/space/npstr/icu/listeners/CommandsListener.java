@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import space.npstr.icu.Main;
+import space.npstr.icu.Launcher;
 import space.npstr.icu.db.entities.GlobalBan;
 import space.npstr.icu.db.entities.GlobalBanRepository;
 import space.npstr.icu.db.entities.GuildSettings;
@@ -578,7 +578,7 @@ public class CommandsListener extends ThreadedListener {
                 }
                 String name = bannedUser == null ? "Unknown User" : bannedUser.getName();
 
-                sb.append(Main.asTimeInCentralEurope(ban.getCreated())).append("\t")
+                sb.append(Launcher.asTimeInCentralEurope(ban.getCreated())).append("\t")
                         .append("<@").append(ban.getUserId()).append(">\t")
                         .append(name).append("\t")
                         .append(ban.getReason()).append("\n");

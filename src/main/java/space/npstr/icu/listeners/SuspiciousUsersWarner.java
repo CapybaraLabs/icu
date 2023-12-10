@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import space.npstr.icu.AuditLogUtil;
-import space.npstr.icu.Main;
+import space.npstr.icu.Launcher;
 import space.npstr.icu.db.entities.ReportingChannelFetcher;
 
 /**
@@ -116,7 +116,7 @@ public class SuspiciousUsersWarner extends ThreadedListener {
             try {
                 bans.add(entry.getValue().join());
             } catch (Exception e) {
-                Throwable realCause = Main.unwrap(e);
+                Throwable realCause = Launcher.unwrap(e);
                 if (!(realCause instanceof ErrorResponseException)
                         || ((ErrorResponseException) realCause).getErrorResponse() != ErrorResponse.UNKNOWN_BAN) {
                     log.error("Failed to fetch ban list for guild {}", entry.getKey(), realCause);

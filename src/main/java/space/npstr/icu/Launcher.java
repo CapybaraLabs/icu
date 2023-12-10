@@ -45,9 +45,9 @@ import space.npstr.icu.info.GitRepoState;
 @EnableConfigurationProperties({
     DiscordProperties.class,
 })
-public class Main {
+public class Launcher {
 
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
+    private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
     private final ShardManagerManager shardManagerManager;
 
@@ -69,7 +69,7 @@ public class Main {
         }
 
         System.setProperty("spring.config.name", "icu");
-        SpringApplication app = new SpringApplication(Main.class);
+        SpringApplication app = new SpringApplication(Launcher.class);
         app.setAdditionalProfiles("secrets");
 
         app.addListeners(
@@ -87,7 +87,7 @@ public class Main {
         app.run(args);
     }
 
-    Main(ShardManagerManager shardManagerManager) {
+    Launcher(ShardManagerManager shardManagerManager) {
         Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
 
         this.shardManagerManager = shardManagerManager;
