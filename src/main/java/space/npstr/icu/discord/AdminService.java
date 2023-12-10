@@ -17,12 +17,14 @@
 
 package space.npstr.icu.discord;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import org.springframework.stereotype.Service;
-import space.npstr.icu.Launcher;
 import space.npstr.icu.db.entities.GuildSettingsRepository;
 
 @Service
@@ -30,12 +32,16 @@ public class AdminService {
 
 	private final GuildSettingsRepository guildSettingsRepo;
 
+	private final Cache<Object, ApplicationInfo> applicationInfoCache = Caffeine.newBuilder()
+		.refreshAfterWrite(1, TimeUnit.HOURS)
+		.build();
+
 	public AdminService(GuildSettingsRepository guildSettingsRepo) {
 		this.guildSettingsRepo = guildSettingsRepo;
 	}
 
 	public boolean isBotOwner(User user) {
-		ApplicationInfo appInfo = Launcher.APP_INFO.get(Launcher.class, __ -> user.getJDA().retrieveApplicationInfo().complete());
+		ApplicationInfo appInfo = applicationInfoCache.get("foo", __ -> user.getJDA().retrieveApplicationInfo().complete());
 		return appInfo != null
 			&& appInfo.getOwner().getIdLong() == user.getIdLong();
 	}

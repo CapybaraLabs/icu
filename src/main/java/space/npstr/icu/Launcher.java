@@ -17,15 +17,11 @@
 
 package space.npstr.icu;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.api.JDAInfo;
-import net.dv8tion.jda.api.entities.ApplicationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -50,11 +46,6 @@ public class Launcher {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
     private final ShardManagerManager shardManagerManager;
-
-    //use something constant as the key, like Main.class
-    public static final Cache<Object, ApplicationInfo> APP_INFO = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
-            .build();
 
     public static void main(String[] args) {
         //just post the info to the console
