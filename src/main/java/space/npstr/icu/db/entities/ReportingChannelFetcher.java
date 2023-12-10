@@ -18,11 +18,9 @@
 package space.npstr.icu.db.entities;
 
 import java.util.Optional;
-import java.util.function.Supplier;
-import javax.annotation.CheckReturnValue;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by napster on 01.05.19.
@@ -30,19 +28,19 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * Return the reporting channel of individual guilds where we can post our reports in
  * and take appropriate measures if we fail to look up such a channel
  */
+@Component
 public class ReportingChannelFetcher {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportingChannelFetcher.class);
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
+    private final GuildSettingsRepository guildSettingsRepo;
 
-    public ReportingChannelFetcher(Supplier<DatabaseWrapper> wrapperSupp) {
-        this.wrapperSupp = wrapperSupp;
+    public ReportingChannelFetcher(GuildSettingsRepository guildSettingsRepo) {
+        this.guildSettingsRepo = guildSettingsRepo;
     }
 
-    @CheckReturnValue
     public Optional<TextChannel> fetchWorkingReportingChannel(Guild guild) {
-        Long reportingChannelId = wrapperSupp.get().getOrCreate(GuildSettings.key(guild)).getReportingChannelId();
+        Long reportingChannelId = guildSettingsRepo.findOrCreateByGuild(guild).getReportingChannelId();
         if (reportingChannelId == null) {
             return Optional.empty();
         }

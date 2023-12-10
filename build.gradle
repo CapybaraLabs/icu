@@ -11,14 +11,12 @@ plugins {
     id 'java'
     id 'application'
     alias(libs.plugins.gitprops)
-    alias(libs.plugins.shadow)
+    alias(libs.plugins.spring)
     alias(libs.plugins.versions)
 }
 
 group 'space.npstr.icu'
 version '0.1.0-SNAPSHOT'
-
-mainClassName = 'space.npstr.icu.Main'
 
 java {
     toolchain {
@@ -34,29 +32,35 @@ repositories {
 
 
 dependencies {
-    //@formatter:off
+    implementation platform(libs.spring.boot.bom)
+
+    implementation libs.spring.boot.starter
+    implementation libs.spring.boot.starter.data.jpa
 
     implementation libs.jda
     implementation libs.logback
     implementation libs.sentry
+    implementation libs.sentry.spring.starter
     implementation libs.yaml
-    implementation libs.sqlsauce.core
-    implementation libs.sqlsauce.discord
-    implementation libs.hibernate.jcache
-    implementation libs.caffeine.jcache
-    implementation libs.annotations
-    implementation libs.jaxb
-    implementation libs.dsproxy
-
-    //@formatter:on
+    runtimeOnly libs.postgresql
+    implementation libs.caffeine
+    compileOnly libs.findbugs // to avoid warning about some missing annotations
 }
 
-compileJava.dependsOn 'clean'
-compileJava.options.encoding = 'UTF-8'
-compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+tasks.withType(JavaCompile).configureEach {
+    dependsOn(processResources)
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
 
-shadowJar {
+bootJar {
     archiveFileName.set("icu.jar")
+    doLast {
+        copy {
+            from 'build/libs/icu.jar'
+            into '.'
+        }
+    }
 }
 
 processResources {

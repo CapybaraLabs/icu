@@ -17,10 +17,10 @@
 
 package space.npstr.icu;
 
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
+import java.util.Collection;
+import java.util.List;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -28,32 +28,30 @@ import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import space.npstr.icu.listeners.BanLogs;
-import space.npstr.icu.listeners.CommandsListener;
-import space.npstr.icu.listeners.EveryoneHereListener;
-import space.npstr.icu.listeners.MemberRoleManager;
-import space.npstr.icu.listeners.ReactionBanListener;
-import space.npstr.icu.listeners.RoleChangesListener;
-import space.npstr.icu.listeners.SuspiciousUsersWarner;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
+import space.npstr.icu.discord.DiscordProperties;
+import space.npstr.icu.listeners.ThreadedListener;
 
 /**
  * Created by napster on 13.02.18.
  * <p>
  * This class's name is totally not a meme.
  */
-@ThreadSafe
+@Component
 public class ShardManagerManager {
 
     private static final Logger log = LoggerFactory.getLogger(ShardManagerManager.class);
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
+    private final DiscordProperties discordProperties;
+    private final List<ThreadedListener> listeners;
     @Nullable
     private volatile ShardManager shardManager;
     private final Object shardManagerInitLock = new Object();
 
-    public ShardManagerManager(Supplier<DatabaseWrapper> wrapperSupp) {
-        this.wrapperSupp = wrapperSupp;
+    public ShardManagerManager(DiscordProperties discordProperties, List<ThreadedListener> listeners) {
+        this.discordProperties = discordProperties;
+        this.listeners = listeners;
     }
 
     public ShardManager getShardManager() {
@@ -62,7 +60,7 @@ public class ShardManagerManager {
             synchronized (shardManagerInitLock) {
                 singleton = shardManager;
                 if (singleton == null) {
-                    shardManager = singleton = initShardManager(wrapperSupp, this::getShardManager);
+                    shardManager = singleton = initShardManager(listeners);
                 }
             }
         }
@@ -78,22 +76,15 @@ public class ShardManagerManager {
         }
     }
 
-    private static ShardManager initShardManager(Supplier<DatabaseWrapper> wrapperSupplier,
-                                                 Supplier<ShardManager> shardManagerSupplier) {
+    private ShardManager initShardManager(Collection<? extends ListenerAdapter> listeners) {
         DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
-            .createDefault(Config.C.discordToken)
+            .createDefault(discordProperties.token())
             .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
-                .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .setChunkingFilter(ChunkingFilter.ALL)
-                .setActivity(Activity.watching("you"))
-                .addEventListeners(new RoleChangesListener(wrapperSupplier))
-                .addEventListeners(new CommandsListener(wrapperSupplier, shardManagerSupplier))
-                .addEventListeners(new EveryoneHereListener(wrapperSupplier))
-                .addEventListeners(new MemberRoleManager(wrapperSupplier, shardManagerSupplier))
-                .addEventListeners(new SuspiciousUsersWarner(wrapperSupplier, shardManagerSupplier))
-                .addEventListeners(new BanLogs(wrapperSupplier))
-                .addEventListeners(new ReactionBanListener(wrapperSupplier))
-                .setEnableShutdownHook(false);
+            .setMemberCachePolicy(MemberCachePolicy.ALL)
+            .setChunkingFilter(ChunkingFilter.ALL)
+            .setActivity(Activity.watching("you"))
+            .addEventListeners(listeners.toArray())
+            .setEnableShutdownHook(false);
         try {
             return shardBuilder.build();
         } catch (Exception e) {

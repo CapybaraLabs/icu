@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -21,7 +21,6 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -32,8 +31,9 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
 
 /**
  * Created by napster on 13.02.18.
@@ -41,16 +41,17 @@ import space.npstr.sqlsauce.DatabaseWrapper;
  * Handles assigning the member role. The member role can be configured and should be understodd as the role that every
  * human member of a guild gets assigned
  */
+@Component
 public class MemberRoleManager extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(MemberRoleManager.class);
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
-    private final Supplier<ShardManager> shardManagerSupp;
+    private final GuildSettingsRepository guildSettingsRepo;
+    private final ObjectProvider<ShardManager> shardManager;
 
-    public MemberRoleManager(Supplier<DatabaseWrapper> wrapperSupplier, Supplier<ShardManager> shardManagerSupplier) {
-        this.wrapperSupp = wrapperSupplier;
-        this.shardManagerSupp = shardManagerSupplier;
+    public MemberRoleManager(GuildSettingsRepository guildSettingsRepo, ObjectProvider<ShardManager> shardManager) {
+        this.guildSettingsRepo = guildSettingsRepo;
+        this.shardManager = shardManager;
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor(
                 r -> new Thread(r, MemberRoleManager.class.getSimpleName() + "-worker")
@@ -58,7 +59,7 @@ public class MemberRoleManager extends ThreadedListener {
 
         service.scheduleAtFixedRate(() -> {
             try {
-                shardManagerSupp.get().getGuildCache().forEach(guild -> {
+                this.shardManager.getObject().getGuildCache().forEach(guild -> {
                     try {
                         assignMemberRole(guild, guild.getMemberCache().stream());
                     } catch (Exception e) {
@@ -83,7 +84,7 @@ public class MemberRoleManager extends ThreadedListener {
 
 
     private void assignMemberRole(Guild guild, Stream<Member> members) {
-        Long roleId = wrapperSupp.get().getOrCreate(GuildSettings.key(guild)).getMemberRoleId();
+        Long roleId = guildSettingsRepo.findOrCreateByGuild(guild).getMemberRoleId();
         if (roleId == null) { //no member role configured
             return;
         }
@@ -112,8 +113,7 @@ public class MemberRoleManager extends ThreadedListener {
                 }
 
                 guild.addRoleToMember(member, memberRole).queue(null, throwable -> {
-                    if (throwable instanceof ErrorResponseException) {
-                        ErrorResponseException errorResponseException = (ErrorResponseException) throwable;
+                    if (throwable instanceof ErrorResponseException errorResponseException) {
                         if (errorResponseException.getErrorResponse() == ErrorResponse.UNKNOWN_MEMBER) {
                             // workaround for eventual consistency / a possible bug happening since the new
                             // intent system is in use.

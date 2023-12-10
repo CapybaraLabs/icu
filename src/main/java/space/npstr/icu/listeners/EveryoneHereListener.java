@@ -17,7 +17,6 @@
 
 package space.npstr.icu.listeners;
 
-import java.util.function.Supplier;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -25,20 +24,25 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.springframework.stereotype.Component;
 import space.npstr.icu.db.entities.GuildSettings;
-import space.npstr.sqlsauce.DatabaseWrapper;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
+import space.npstr.icu.discord.AdminService;
 
 /**
  * Created by napster on 25.01.18.
  * <p>
  * Listens for messages containing everyone / here mentions and give the user using it that role to troll them back
  */
+@Component
 public class EveryoneHereListener extends ThreadedListener {
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
+    private final AdminService adminService;
+    private final GuildSettingsRepository guildSettingsRepo;
 
-    public EveryoneHereListener(Supplier<DatabaseWrapper> wrapperSupplier) {
-        this.wrapperSupp = wrapperSupplier;
+    public EveryoneHereListener(AdminService adminService, GuildSettingsRepository guildSettingsRepo) {
+        this.adminService = adminService;
+        this.guildSettingsRepo = guildSettingsRepo;
     }
 
     @Override
@@ -58,15 +62,15 @@ public class EveryoneHereListener extends ThreadedListener {
             return;
         }
         Guild guild = event.getGuild();
-        GuildSettings guildSettings = wrapperSupp.get().getOrCreate(GuildSettings.key(guild));
 
         //dont troll admins
-        if (CommandsListener.isAdmin(wrapperSupp.get(), member)) {
+        if (adminService.isAdmin(member)) {
             return;
         }
 
         Message msg = event.getMessage();
 
+        GuildSettings guildSettings = guildSettingsRepo.findOrCreateByGuild(guild);
         Long hereId = guildSettings.getHereRoleId();
         Role hereRole = hereId != null ? guild.getRoleById(hereId) : null;
         if (hereRole != null

@@ -17,59 +17,50 @@
 
 package space.npstr.icu.db.entities;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
-import space.npstr.sqlsauce.entities.SaucedEntity;
-import space.npstr.sqlsauce.fp.types.EntityKey;
 
 /**
  * Created by napster on 01.05.19.
  */
 @Entity
 @Table(name = "reaction_ban")
-@Cacheable(value = false) //always fetch the most recent roles for a user
-public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite, ReactionBan> {
+public class ReactionBan {
 
-    @SuppressWarnings("NullableProblems") //never null if correctly initialized by Hibernate / sqlsauce
     @EmbeddedId
     private ChannelEmoteComposite id;
 
-    //for jpa / database wrapper
-    ReactionBan() {
-    }
-
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, EmojiUnion emoji) {
+    public static ChannelEmoteComposite key(Channel channel, EmojiUnion emoji) {
         return switch (emoji.getType()) {
             case CUSTOM -> key(channel, emoji.asCustom());
-            case UNICODE -> EntityKey.of(new ChannelEmoteComposite(channel, emoji.asUnicode()), ReactionBan.class);
+            case UNICODE -> new ChannelEmoteComposite(channel, emoji.asUnicode());
         };
     }
 
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, CustomEmoji emoji) {
-        return EntityKey.of(new ChannelEmoteComposite(channel, emoji), ReactionBan.class);
+    public static ChannelEmoteComposite key(Channel channel, CustomEmoji emoji) {
+        return new ChannelEmoteComposite(channel, emoji);
     }
 
-    public static EntityKey<ChannelEmoteComposite, ReactionBan> key(Channel channel, String string) {
-        return EntityKey.of(new ChannelEmoteComposite(channel.getIdLong(), string), ReactionBan.class);
+    public static ChannelEmoteComposite key(Channel channel, String string) {
+        return new ChannelEmoteComposite(channel.getIdLong(), string);
     }
 
-    @Override
-    public ReactionBan setId(ChannelEmoteComposite id) {
+    //for jpa / database wrapper
+    public ReactionBan() {}
+
+    ReactionBan(ChannelEmoteComposite id) {
         this.id = id;
-        return this;
     }
 
-    @Override
     public ChannelEmoteComposite getId() {
         return this.id;
     }
@@ -82,8 +73,6 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
     @Embeddable
     public static class ChannelEmoteComposite implements Serializable {
 
-        private static final long serialVersionUID = 1L;
-
         @Column(name = "channel_id", nullable = false)
         private long channelId;
 
@@ -91,18 +80,17 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
         private String emote = ""; //either emoji unicode or snowflake id of discord emote
 
         //for jpa & the database wrapper
-        ChannelEmoteComposite() {
-        }
+        public ChannelEmoteComposite() {}
 
-        public ChannelEmoteComposite(Channel channel, UnicodeEmoji emoji) {
+        ChannelEmoteComposite(Channel channel, UnicodeEmoji emoji) {
             this(channel.getIdLong(), emoji.getName());
         }
 
-        public ChannelEmoteComposite(Channel channel, CustomEmoji emoji) {
+        ChannelEmoteComposite(Channel channel, CustomEmoji emoji) {
             this(channel.getIdLong(), emoji.getId());
         }
 
-        public ChannelEmoteComposite(long channelId, String emote) {
+        ChannelEmoteComposite(long channelId, String emote) {
             this.channelId = channelId;
             this.emote = emote;
         }
@@ -111,16 +99,8 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
             return channelId;
         }
 
-        public void setChannelId(long channelId) {
-            this.channelId = channelId;
-        }
-
         public String getEmote() {
             return emote;
-        }
-
-        public void setEmote(String emote) {
-            this.emote = emote;
         }
 
         @Override
@@ -131,8 +111,7 @@ public class ReactionBan extends SaucedEntity<ReactionBan.ChannelEmoteComposite,
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof ChannelEmoteComposite)) return false;
-            ChannelEmoteComposite other = (ChannelEmoteComposite) o;
+            if (!(o instanceof ChannelEmoteComposite other)) return false;
             return this.channelId == other.channelId && this.emote.equals(other.emote);
         }
 

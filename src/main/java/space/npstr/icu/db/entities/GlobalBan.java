@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 - 2018 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,16 +17,11 @@
 
 package space.npstr.icu.db.entities;
 
-import net.dv8tion.jda.api.entities.User;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import space.npstr.sqlsauce.entities.discord.BaseDiscordUser;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.Objects;
 
 /**
  * Created by napster on 10.03.18.
@@ -35,9 +30,11 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "global_bans")
-@Cacheable(value = true)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "global_bans")
-public class GlobalBan extends BaseDiscordUser<GlobalBan> {
+public class GlobalBan {
+
+    @Id
+    @Column(name = "user_id", nullable = false)
+    private long userId;
 
     @Column(name = "reason", columnDefinition = "text", nullable = false)
     private String reason = "No reason provided";
@@ -46,23 +43,35 @@ public class GlobalBan extends BaseDiscordUser<GlobalBan> {
     private long created = System.currentTimeMillis();
 
     //JPA / wrapper
-    GlobalBan() {
+    GlobalBan() {}
+
+    GlobalBan(long userId) {
+        this.userId = userId;
     }
 
-    public static EntityKey<Long, GlobalBan> key(User user) {
-        return EntityKey.of(user.getIdLong(), GlobalBan.class);
+    public long getUserId() {
+        return userId;
     }
 
     public String getReason() {
         return reason;
     }
 
-    public GlobalBan setReason(String reason) {
+    public void setReason(String reason) {
         this.reason = reason;
-        return this;
     }
 
     public long getCreated() {
         return created;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return (obj instanceof GlobalBan) && ((GlobalBan) obj).userId == this.userId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.userId);
     }
 }

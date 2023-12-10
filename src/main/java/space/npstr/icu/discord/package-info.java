@@ -17,6 +17,6 @@
  */
 
 @NonNullApi
-package space.npstr.icu.db.entities;
+package space.npstr.icu.discord;
 
 import org.springframework.lang.NonNullApi;

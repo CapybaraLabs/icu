@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2017 - 2023 Dennis Neufeld
+ * Copyright (C) 2018 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -16,7 +15,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@NonNullApi
 package space.npstr.icu.db.entities;
 
-import org.springframework.lang.NonNullApi;
+import net.dv8tion.jda.api.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface GlobalBanRepository extends JpaRepository<GlobalBan, Long> {
+
+	default GlobalBan findOrCreateByUser(User user) {
+		return findById(user.getIdLong())
+			.orElseGet(() -> this.save(new GlobalBan(user.getIdLong())));
+	}
+
+	default void deleteByUser(User user) {
+		deleteById(user.getIdLong());
+	}
+}

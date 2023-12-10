@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Dennis Neufeld
+ * Copyright (C) 2017 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -17,74 +17,62 @@
 
 package space.npstr.icu.db.entities;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
-import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import space.npstr.sqlsauce.entities.MemberComposite;
-import space.npstr.sqlsauce.entities.SaucedEntity;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-import space.npstr.sqlsauce.hibernate.types.BasicType;
+import org.springframework.lang.Nullable;
 
 /**
  * Created by napster on 27.12.17.
  */
 @Entity
 @Table(name = "member_roles")
-@Cacheable(value = false) //always fetch the most recent roles for a user
-public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
+public class MemberRoles {
 
     private static final Logger log = LoggerFactory.getLogger(MemberRoles.class);
 
-    @SuppressWarnings("NullableProblems") //never null if correctly initialized by Hibernate / sqlsauce
     @EmbeddedId
     private MemberComposite id;
 
-    @Type(type = "hash-set-basic")
-    @BasicType(Long.class)
     @Column(name = "role_ids", columnDefinition = "bigint[]")
-    private HashSet<Long> roleIds = new HashSet<>();
+    private Set<Long> roleIds = new HashSet<>();
 
     @Nullable
     @Column(name = "nickname", columnDefinition = "text", nullable = true)
     private String nickname;
 
     //for jpa / database wrapper
-    MemberRoles() {
-    }
+    public MemberRoles() {}
 
-    public static EntityKey<MemberComposite, MemberRoles> key(Member member) {
-        return EntityKey.of(new MemberComposite(member), MemberRoles.class);
-    }
-
-    public static EntityKey<MemberComposite, MemberRoles> key(Guild guild, User user) {
-        return EntityKey.of(new MemberComposite(guild, user), MemberRoles.class);
-    }
-
-    @Override
-    public MemberRoles setId(MemberComposite id) {
+    MemberRoles(MemberComposite id) {
         this.id = id;
-        return this;
     }
 
-    @Override
+    public static MemberComposite key(Member member) {
+        return new MemberComposite(member);
+    }
+
+    public static MemberComposite key(Guild guild, User user) {
+        return new MemberComposite(guild, user);
+    }
+
     public MemberComposite getId() {
         return this.id;
     }
@@ -105,61 +93,46 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
                 .collect(Collectors.toSet());
     }
 
-    @CheckReturnValue
-    public MemberRoles addRoleId(long roleId) {
+    public void addRoleId(long roleId) {
         roleIds.add(roleId);
-        return this;
     }
 
-    @CheckReturnValue
-    public MemberRoles addRole(Role role) {
+    public void addRole(Role role) {
         if (role.isManaged()) {
-            return this; //dont touch managed roles, this is not our responsibility
+            return; //dont touch managed roles, this is not our responsibility
         }
-        return addRoleId(role.getIdLong());
+        addRoleId(role.getIdLong());
     }
 
-    @CheckReturnValue
-    public MemberRoles addRoles(Collection<Role> roles) {
-        MemberRoles result = this;
+    public void addRoles(Collection<Role> roles) {
         for (Role role : roles) {
-            result = addRole(role);
+            addRole(role);
         }
-        return result;
     }
 
-    @CheckReturnValue
-    public MemberRoles removeRoleId(long roleId) {
+    public void removeRoleId(long roleId) {
         roleIds.remove(roleId);
-        return this;
     }
 
-    @CheckReturnValue
-    public MemberRoles removeRole(Role role) {
-        return removeRoleId(role.getIdLong());
+    public void removeRole(Role role) {
+        removeRoleId(role.getIdLong());
     }
 
-    @CheckReturnValue
-    public MemberRoles removeRoles(Collection<Role> roles) {
-        MemberRoles result = this;
+    public void removeRoles(Collection<Role> roles) {
         for (Role role : roles) {
-            result = removeRole(role);
+            removeRole(role);
         }
-        return result;
     }
 
-    @CheckReturnValue
-    public MemberRoles setRoleIds(Collection<Long> roleIds) {
+    public void setRoleIds(Collection<Long> roleIds) {
         this.roleIds.clear();
         this.roleIds.addAll(roleIds);
-        return this;
     }
 
-    @CheckReturnValue
-    public MemberRoles setRoles(Collection<Role> roles) {
-        return setRoleIds(roles.stream()
-                .filter(role -> !role.isManaged()) //dont touch managed roles, this is not our responsibility
-                .map(ISnowflake::getIdLong).collect(Collectors.toSet()));
+    public void setRoles(Collection<Role> roles) {
+        setRoleIds(roles.stream()
+            .filter(role -> !role.isManaged()) //dont touch managed roles, this is not our responsibility
+            .map(ISnowflake::getIdLong).collect(Collectors.toSet()));
     }
 
     @Nullable
@@ -167,15 +140,73 @@ public class MemberRoles extends SaucedEntity<MemberComposite, MemberRoles> {
         return nickname;
     }
 
-    @CheckReturnValue
-    public MemberRoles setNickname(@Nullable String nickname) {
+    public void setNickname(@Nullable String nickname) {
         this.nickname = nickname;
-        return this;
     }
 
-    @CheckReturnValue
-    public MemberRoles set(Member member) {
-        return setRoles(member.getRoles())
-                .setNickname(member.getNickname());
+    public void set(Member member) {
+        setRoles(member.getRoles());
+        setNickname(member.getNickname());
+    }
+
+
+    @Embeddable
+    public static class MemberComposite implements Serializable {
+
+        @Column(name = "guild_id", nullable = false)
+        private long guildId;
+
+        @Column(name = "user_id", nullable = false)
+        private long userId;
+
+        //for jpa & the database wrapper
+        public MemberComposite() {
+        }
+
+        public MemberComposite(Member member) {
+            this(member.getGuild(), member.getUser());
+        }
+
+        public MemberComposite(Guild guild, User user) {
+            this(guild.getIdLong(), user.getIdLong());
+        }
+
+        public MemberComposite(long guildId, long userId) {
+            this.guildId = guildId;
+            this.userId = userId;
+        }
+
+        public long getGuildId() {
+            return guildId;
+        }
+
+        public void setGuildId(long guildId) {
+            this.guildId = guildId;
+        }
+
+        public long getUserId() {
+            return userId;
+        }
+
+        public void setUserId(long userId) {
+            this.userId = userId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(guildId, userId);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MemberComposite other)) return false;
+            return this.guildId == other.guildId && this.userId == other.userId;
+        }
+
+        @Override
+        public String toString() {
+            return MemberComposite.class.getSimpleName() + String.format("(G %s, U %s)", guildId, userId);
+        }
     }
 }

@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2017 - 2023 Dennis Neufeld
+ * Copyright (C) 2018 - 2023 Dennis Neufeld
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -16,7 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@NonNullApi
 package space.npstr.icu.db.entities;
 
-import org.springframework.lang.NonNullApi;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ReactionBanRepository extends JpaRepository<ReactionBan, ReactionBan.ChannelEmoteComposite> {
+
+	default ReactionBan findOrCreate(ReactionBan.ChannelEmoteComposite id) {
+		return findById(id)
+			.orElseGet(() -> this.save(new ReactionBan(id)));
+	}
+
+}

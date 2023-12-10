@@ -5,11 +5,7 @@ logs/*
 *hs_err_pid*.log
 
 # secret files
-*sneaky.yaml
-
-# some development environment stuff, these makes intellij ultimate's persistence stuff work
-*hibernate.cfg.xml
-*persistence.xml
+icu-secrets.yaml
 
 # common symlinks
 icu.jar

@@ -17,34 +17,31 @@
 
 package space.npstr.icu.db.entities;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import javax.annotation.Nullable;
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import net.dv8tion.jda.api.entities.Guild;
+import java.util.Objects;
+import java.util.Set;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Type;
-import space.npstr.sqlsauce.entities.discord.BaseDiscordGuild;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-import space.npstr.sqlsauce.hibernate.types.BasicType;
+import org.springframework.lang.Nullable;
 
 /**
  * Created by napster on 25.01.18.
  */
 @Entity
 @Table(name = "guild_settings")
-@Cacheable(value = true)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "guild_settings")
-public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
+public class GuildSettings {
+
+    @Id
+    @Column(name = "guild_id", nullable = false)
+    protected long guildId;
 
     @Nullable
     @Column(name = "everyone_role_id", nullable = true)
@@ -58,15 +55,11 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Column(name = "member_role_id", nullable = true)
     private Long memberRoleId;
 
-    @Type(type = "hash-set-basic")
-    @BasicType(Long.class)
     @Column(name = "admin_role_ids", columnDefinition = "bigint[]", nullable = false)
-    private HashSet<Long> adminRoleIds = new HashSet<>();
+    private Set<Long> adminRoleIds = new HashSet<>();
 
-    @Type(type = "hash-set-basic")
-    @BasicType(Long.class)
     @Column(name = "admin_user_ids", columnDefinition = "bigint[]", nullable = false)
-    private HashSet<Long> adminUserIds = new HashSet<>();
+    private Set<Long> adminUserIds = new HashSet<>();
 
     @Nullable
     @Column(name = "reporting_channel_id", nullable = true)
@@ -80,34 +73,32 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     @Column(name = "log_channel_id", nullable = true)
     private Long logChannelId;
 
-    @Type(type = "hash-set-basic")
-    @BasicType(Long.class)
     @Column(name = "ignored_role_ids", columnDefinition = "bigint[]", nullable = false)
     @ColumnDefault("array[]::bigint[]")
-    private HashSet<Long> ignoredRoleIds = new HashSet<>();
+    private Set<Long> ignoredRoleIds = new HashSet<>();
 
     //jpa / database wrapper
-    GuildSettings() {
+    public GuildSettings() {}
+
+    GuildSettings(long guildId) {
+        this.guildId = guildId;
     }
 
-    public static EntityKey<Long, GuildSettings> key(Guild guild) {
-        return EntityKey.of(guild.getIdLong(), GuildSettings.class);
+    public long getGuildId() {
+        return this.guildId;
     }
-
 
     @Nullable
     public Long getEveryoneRoleId() {
         return everyoneRoleId;
     }
 
-    public GuildSettings setEveryoneRole(Role role) {
+    public void setEveryoneRole(Role role) {
         this.everyoneRoleId = role.getIdLong();
-        return this;
     }
 
-    public GuildSettings resetEveryoneRole() {
+    public void resetEveryoneRole() {
         this.everyoneRoleId = null;
-        return this;
     }
 
 
@@ -116,14 +107,12 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return hereRoleId;
     }
 
-    public GuildSettings setHereRole(Role role) {
+    public void setHereRole(Role role) {
         this.hereRoleId = role.getIdLong();
-        return this;
     }
 
-    public GuildSettings resetHereRole() {
+    public void resetHereRole() {
         this.hereRoleId = null;
-        return this;
     }
 
     @Nullable
@@ -131,37 +120,31 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return memberRoleId;
     }
 
-    public GuildSettings setMemberRole(Role role) {
+    public void setMemberRole(Role role) {
         this.memberRoleId = role.getIdLong();
-        return this;
     }
 
-    public GuildSettings resetMemberRole() {
+    public void resetMemberRole() {
         this.memberRoleId = null;
-        return this;
     }
 
 
-    public GuildSettings addAdminRole(Role role) {
+    public void addAdminRole(Role role) {
         adminRoleIds.add(role.getIdLong());
-        return this;
     }
 
-    public GuildSettings addAdminRoles(Collection<Role> roles) {
-        GuildSettings result = this;
+    public void addAdminRoles(Collection<Role> roles) {
         for (Role role : roles) {
-            result = addAdminRole(role);
+            addAdminRole(role);
         }
-        return result;
     }
 
-    public GuildSettings removeAdminRole(long roleId) {
+    public void removeAdminRole(long roleId) {
         adminRoleIds.remove(roleId);
-        return this;
     }
 
-    public GuildSettings removeAdminRole(Role role) {
-        return removeAdminRole(role.getIdLong());
+    public void removeAdminRole(Role role) {
+        removeAdminRole(role.getIdLong());
     }
 
     //use one of the other methods to add / remove admins
@@ -170,26 +153,22 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
     }
 
 
-    public GuildSettings addAdminUser(Member member) {
+    public void addAdminUser(Member member) {
         adminUserIds.add(member.getUser().getIdLong());
-        return this;
     }
 
-    public GuildSettings addAdminUsers(Collection<Member> members) {
-        GuildSettings result = this;
+    public void addAdminUsers(Collection<Member> members) {
         for (Member member : members) {
-            result = addAdminUser(member);
+            addAdminUser(member);
         }
-        return result;
     }
 
-    public GuildSettings removeAdminUser(long userId) {
+    public void removeAdminUser(long userId) {
         adminUserIds.remove(userId);
-        return this;
     }
 
-    public GuildSettings removeAdminUser(Member member) {
-        return removeAdminUser(member.getUser().getIdLong());
+    public void removeAdminUser(Member member) {
+        removeAdminUser(member.getUser().getIdLong());
     }
 
     //use one of the other methods to add / remove admins
@@ -226,31 +205,28 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return reportingChannelId;
     }
 
-    public GuildSettings setReportingChannel(MessageChannel reportingChannel) {
+    public void setReportingChannel(MessageChannel reportingChannel) {
         this.reportingChannelId = reportingChannel.getIdLong();
-        return this;
     }
 
-    public GuildSettings resetReportingChannel() {
+    public void resetReportingChannel() {
         this.reportingChannelId = null;
-        return this;
     }
 
     public boolean areGlobalBansEnabled() {
         return globalBansEnabled;
     }
 
-    public GuildSettings setGlobalBansEnabled(boolean globalBansEnabled) {
+    public void setGlobalBansEnabled(boolean globalBansEnabled) {
         this.globalBansEnabled = globalBansEnabled;
-        return this;
     }
 
-    public GuildSettings enableGlobalBans() {
-        return setGlobalBansEnabled(true);
+    public void enableGlobalBans() {
+        setGlobalBansEnabled(true);
     }
 
-    public GuildSettings disableGlobalBans() {
-        return setGlobalBansEnabled(false);
+    public void disableGlobalBans() {
+        setGlobalBansEnabled(false);
     }
 
 
@@ -259,40 +235,34 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
         return logChannelId;
     }
 
-    public GuildSettings setLogChannel(MessageChannel logChannel) {
+    public void setLogChannel(MessageChannel logChannel) {
         this.logChannelId = logChannel.getIdLong();
-        return this;
     }
 
-    public GuildSettings resetLogChannel() {
+    public void resetLogChannel() {
         this.logChannelId = null;
-        return this;
     }
 
     public Collection<Long> getIgnoredRoleIds() {
         return Collections.unmodifiableCollection(ignoredRoleIds);
     }
 
-    public GuildSettings addIgnoredRole(Role role) {
+    public void addIgnoredRole(Role role) {
         this.ignoredRoleIds.add(role.getIdLong());
-        return this;
     }
 
-    public GuildSettings addIgnoredRoles(Collection<Role> roles) {
-        GuildSettings result = this;
+    public void addIgnoredRoles(Collection<Role> roles) {
         for (Role role : roles) {
-            result = addIgnoredRole(role);
+            addIgnoredRole(role);
         }
-        return result;
     }
 
-    public GuildSettings removeIgnoredRoleId(long roleId) {
+    public void removeIgnoredRoleId(long roleId) {
         this.ignoredRoleIds.remove(roleId);
-        return this;
     }
 
-    public GuildSettings removeIgnoredRole(Role role) {
-        return removeIgnoredRoleId(role.getIdLong());
+    public void removeIgnoredRole(Role role) {
+        removeIgnoredRoleId(role.getIdLong());
     }
 
     public boolean isIgnoredRoleId(long roleId) {
@@ -301,5 +271,15 @@ public class GuildSettings extends BaseDiscordGuild<GuildSettings> {
 
     public boolean isIgnoredRole(Role role) {
         return isIgnoredRoleId(role.getIdLong());
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return (obj instanceof GuildSettings) && ((GuildSettings) obj).guildId == this.guildId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.guildId);
     }
 }

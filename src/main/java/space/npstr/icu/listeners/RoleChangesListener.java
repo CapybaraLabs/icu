@@ -18,9 +18,7 @@
 package space.npstr.icu.listeners;
 
 import java.util.Collection;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -33,26 +31,29 @@ import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameE
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 import space.npstr.icu.db.entities.GuildSettings;
+import space.npstr.icu.db.entities.GuildSettingsRepository;
 import space.npstr.icu.db.entities.MemberRoles;
-import space.npstr.sqlsauce.DatabaseWrapper;
-import space.npstr.sqlsauce.entities.MemberComposite;
-import space.npstr.sqlsauce.fp.types.EntityKey;
-import space.npstr.sqlsauce.fp.types.Transfiguration;
+import space.npstr.icu.db.entities.MemberRolesRepository;
 
 /**
  * Created by napster on 27.12.17.
  */
+@Component
 public class RoleChangesListener extends ThreadedListener {
 
     private static final Logger log = LoggerFactory.getLogger(RoleChangesListener.class);
 
+    private final TransactionTemplate transactionTemplate;
+    private final GuildSettingsRepository guildSettingsRepo;
+    private final MemberRolesRepository memberRolesRepository;
 
-    private final Supplier<DatabaseWrapper> wrapperSupp;
-
-
-    public RoleChangesListener(Supplier<DatabaseWrapper> wrapperSupplier) {
-        this.wrapperSupp = wrapperSupplier;
+    public RoleChangesListener(TransactionTemplate transactionTemplate, GuildSettingsRepository guildSettingsRepo, MemberRolesRepository memberRolesRepository) {
+        this.transactionTemplate = transactionTemplate;
+        this.guildSettingsRepo = guildSettingsRepo;
+        this.memberRolesRepository = memberRolesRepository;
     }
 
     @Override
@@ -100,14 +101,21 @@ public class RoleChangesListener extends ThreadedListener {
 
 
     private void updateMember(Member member) {
-        wrapperSupp.get().findApplyAndMerge(MemberRoles.key(member), mr -> mr.set(member));
+        transactionTemplate.executeWithoutResult(__ ->
+            memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
+        );
     }
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         getExecutor(event.getGuild()).execute(() -> {
-            EntityKey<MemberComposite, MemberRoles> key = EntityKey.of(new MemberComposite(event.getMember()), MemberRoles.class);
-            MemberRoles memberRoles = wrapperSupp.get().getOrCreate(key);
+            MemberRoles memberRoles = memberRolesRepository.findById(new MemberRoles.MemberComposite(event.getMember())).orElse(null);
+
+            if (memberRoles == null) {
+                log.debug("User {} joined guild {}, nothing to restore", event.getMember(), event.getGuild());
+                return;
+            }
+
             Collection<Role> roles = memberRoles.getRoles(__ -> event.getGuild());
             String storedNick = memberRoles.getNickname();
             log.debug("User {} joined guild {}, restoring nickname {} and roles: {}",
@@ -127,8 +135,7 @@ public class RoleChangesListener extends ThreadedListener {
                 }
             }
 
-            var guildSettingsKey = EntityKey.of(event.getGuild().getIdLong(), GuildSettings.class);
-            GuildSettings guildSettings = wrapperSupp.get().getOrCreate(guildSettingsKey);
+            GuildSettings guildSettings = guildSettingsRepo.findOrCreateByGuild(event.getGuild());
             roles = roles.stream().filter(
                     role -> {
                         if (role.isManaged()) {
@@ -159,22 +166,25 @@ public class RoleChangesListener extends ThreadedListener {
 
     @Override
     public void onGuildJoin(GuildJoinEvent event) {
-        getExecutor(event.getGuild()).execute(() -> {
-            Stream<Transfiguration<MemberComposite, MemberRoles>> stream = event.getGuild().getMemberCache().stream()
-                    .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
-
-            wrapperSupp.get().findApplyAndMergeAll(stream);
-        });
+        getExecutor(event.getGuild()).execute(() ->
+            event.getGuild().getMemberCache().stream().forEach(member ->
+                transactionTemplate.executeWithoutResult(__ ->
+                    memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
+                )
+            )
+        );
     }
 
     @Override
     public void onReady(ReadyEvent event) {
-        DEFAULT_EXEC.execute(() -> {
-            Stream<Transfiguration<MemberComposite, MemberRoles>> stream = event.getJDA().getGuildCache().stream()
-                    .flatMap(guild -> guild.getMemberCache().stream())
-                    .map(member -> Transfiguration.of(MemberRoles.key(member), memberRole -> memberRole.set(member)));
-
-            wrapperSupp.get().findApplyAndMergeAll(stream);
-        });
+        DEFAULT_EXEC.execute(() ->
+            event.getJDA().getGuildCache().stream()
+                .flatMap(guild -> guild.getMemberCache().stream())
+                .forEach(member ->
+                    transactionTemplate.executeWithoutResult(__ ->
+                        memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
+                    )
+                )
+        );
     }
 }
