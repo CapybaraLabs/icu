@@ -2,12 +2,12 @@ version: '3.6'
 services:
 
   db:
-    image: napstr/poggres:16
+    image: napstr/poggres:17
     restart: always
     ports:
       - 127.0.0.1:5433:5432
     volumes:
-      - ./postgres-data/16/data:/var/lib/postgresql/data
+      - ./postgres-data/17/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=icu
       # See https://github.com/napstr/poggres#env-vars
