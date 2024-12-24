@@ -8,11 +8,11 @@ buildscript {
 }
 
 plugins {
-    id 'java'
-    id 'application'
-    alias(libs.plugins.gitprops)
-    alias(libs.plugins.spring)
-    alias(libs.plugins.versions)
+    id "java"
+    id "application"
+    id "com.gorylenko.gradle-git-properties" version "$gradleGitPluginVersion"
+    id "com.github.ben-manes.versions" version "$versionsPluginVersion"
+    id "org.springframework.boot" version "$springBootVersion"
 }
 
 group 'space.npstr.icu'
@@ -32,18 +32,18 @@ repositories {
 
 
 dependencies {
-    implementation platform(libs.spring.boot.bom)
+    implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
 
-    implementation libs.spring.boot.starter
-    implementation libs.spring.boot.starter.data.jpa
+    implementation "org.springframework.boot:spring-boot-starter"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 
-    implementation libs.jda
-    implementation libs.logback
-    implementation libs.sentry
-    implementation libs.sentry.spring.starter
-    runtimeOnly libs.postgresql
-    implementation libs.caffeine
-    compileOnly libs.findbugs // to avoid warning about some missing annotations
+    implementation "net.dv8tion:JDA:$jdaVersion"
+    implementation "ch.qos.logback:logback-classic"
+    implementation "io.sentry:sentry-logback:$sentryVersion"
+    implementation "io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion"
+    runtimeOnly "org.postgresql:postgresql"
+    implementation "com.github.ben-manes.caffeine:caffeine"
+    compileOnly "com.google.code.findbugs:jsr305:$findbugsVersion" // to avoid warning about some missing annotations
 }
 
 tasks.withType(JavaCompile).configureEach {
