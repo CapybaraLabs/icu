@@ -15,8 +15,8 @@ plugins {
     id "org.springframework.boot" version "$springBootVersion"
 }
 
-group 'space.npstr.icu'
-version '0.1.0-SNAPSHOT'
+group = 'space.npstr.icu'
+version = '0.1.0-SNAPSHOT'
 
 java {
     toolchain {
@@ -27,7 +27,7 @@ java {
 
 repositories {
     mavenCentral()                          // everything else
-    maven { url 'https://jitpack.io' }      // for getting builds from github
+    maven { url = 'https://jitpack.io' }    // for getting builds from github
 }
 
 
@@ -64,11 +64,14 @@ bootJar {
 
 processResources {
     //inject values into app.properties
+    def projectVersion = project.version
+    def projectGroup = project.group
+    def projectName = project.name
     filesMatching("**/app.properties") {
         filter ReplaceTokens, tokens: [
-                "project.version"   : project.version,
-                "project.groupId"   : project.group,
-                "project.artifactId": project.name,
+                "project.version"   : projectVersion,
+                "project.groupId"   : projectGroup,
+                "project.artifactId": projectName,
                 "env.BUILD_NUMBER"  : (System.getenv('CI') ? System.getenv('BUILD_NUMBER') : 'DEV'),
                 "env.BUILD_TIME"    : System.currentTimeMillis() + ''
         ]
