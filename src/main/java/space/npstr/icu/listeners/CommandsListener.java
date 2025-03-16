@@ -1012,7 +1012,7 @@ public class CommandsListener extends ThreadedListener {
             output += "`disable global bans`\n\t\tDisable global ban list curated by the bot owner.\n";
             output += "`list global bans`\n\t\tList all globally banned users with reasons.\n";
             output += "`[@user | userId | userName | userNickname] global ban <reason>`\n\t\tGlobally ban a user (bot owner only).\n";
-            output += "`<space delimited user ids> global mass ban <reason>\n\t\tGlobally ban a ton of users (bot owner only).\n";
+            output += "`<space delimited user ids> global mass ban <reason>`\n\t\tGlobally ban a ton of users (bot owner only).\n";
             output += "`global unban [@user | userId]`\n\t\tRemove a user form the global bans (will not unban them in any server) (bot owner only).\n";
             output += "`nsa report`\n\t\tChecks all members of this guild for bans in other guilds.\n";
             output += "`#channel :custom_emote: add reaction ban :emoji:`\n\t\tAdd a reaction ban for a channel and emote.\n";
