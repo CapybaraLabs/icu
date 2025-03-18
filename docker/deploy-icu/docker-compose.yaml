@@ -24,7 +24,7 @@ services:
       - ./logs:/opt/icu/logs
       - ./logs/gc:/opt/icu/logs/gc
     ports:
-      - 127.0.0.1:5006:5005   # Remote debug
+      - 127.0.0.1:5008:5005   # Remote debug
     entrypoint:
       - java
       - -Xmx1024m
