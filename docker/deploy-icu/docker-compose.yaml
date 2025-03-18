@@ -28,12 +28,16 @@ services:
     entrypoint:
       - java
       - -Xmx1024m
+      - -XX:+AlwaysPreTouch
       - -XX:+HeapDumpOnOutOfMemoryError
       - -XX:HeapDumpPath=emergencydump.hprof
-      - -Xlog:gc*:logs/gc/gc-%t.log::filesize=1048576   #1gb
-      - -XX:+UseG1GC
-      - -XX:+ParallelRefProcEnabled
-      - -XX:+UseStringDeduplication
       - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - -Xlog:gc*:logs/gc/gc-%t.log::filesize=1g
+      #- -XX:+UseG1GC
+      #- -XX:+ParallelRefProcEnabled
+      - -XX:+UseZGC
+      - -XX:+ZGenerational
+      - -XX:+UseTransparentHugePages
+      - -XX:+UseStringDeduplication
       - -jar
       - icu.jar
