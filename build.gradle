@@ -40,7 +40,7 @@ dependencies {
     implementation "net.dv8tion:JDA:$jdaVersion"
     implementation "ch.qos.logback:logback-classic"
     implementation "io.sentry:sentry-logback:$sentryVersion"
-    implementation "io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion"
+    implementation "io.sentry:sentry-spring-boot-4-starter:$sentryVersion"
     runtimeOnly "org.postgresql:postgresql"
     implementation "com.github.ben-manes.caffeine:caffeine"
     compileOnly "com.google.code.findbugs:jsr305:$findbugsVersion" // to avoid warning about some missing annotations

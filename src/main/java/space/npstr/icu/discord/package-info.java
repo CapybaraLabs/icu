@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@NonNullApi
+@NullMarked
 package space.npstr.icu.discord;
 
-import org.springframework.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;
