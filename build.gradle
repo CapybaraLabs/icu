@@ -43,7 +43,6 @@ dependencies {
     implementation "io.sentry:sentry-spring-boot-4-starter:$sentryVersion"
     runtimeOnly "org.postgresql:postgresql"
     implementation "com.github.ben-manes.caffeine:caffeine"
-    compileOnly "com.google.code.findbugs:jsr305:$findbugsVersion" // to avoid warning about some missing annotations
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -94,7 +93,7 @@ task resolveAndLockAll {
             }
         }
         configurations
-                .findAll { it.canBeResolved }
+                .matching { it.canBeResolved }
                 .each { it.resolve() }
     }
 }
