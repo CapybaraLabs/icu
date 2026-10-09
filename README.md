@@ -1,6 +1,6 @@
 <img align="right" src="https://i.imgur.com/YqyuKXT.png" height="200" width="200">
 
-# i.c.u. [![Build](https://github.com/napstr/icu/actions/workflows/build.yaml/badge.svg)](https://github.com/napstr/icu/actions/workflows/build.yaml)
+# i.c.u. [![Build](https://github.com/CapybaraLabs/icu/actions/workflows/build.yaml/badge.svg)](https://github.com/CapybaraLabs/icu/actions/workflows/build.yaml)
 
 A super simple Discord bot, originally created to preserve a users roles when they leave the server and rejoin.
 
