@@ -79,7 +79,9 @@ public class ShardManagerManager {
     private ShardManager initShardManager(Collection<? extends ListenerAdapter> listeners) {
         DefaultShardManagerBuilder shardBuilder = DefaultShardManagerBuilder
             .createDefault(discordProperties.token())
-            .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
+            .enableIntents(GatewayIntent.GUILD_MEMBERS)
+            // raw data is needed to read role mentions without the MESSAGE_CONTENT intent, see EveryoneHereListener
+            .setEventPassthrough(true)
             .setMemberCachePolicy(MemberCachePolicy.ALL)
             .setChunkingFilter(ChunkingFilter.ALL)
             .setActivity(Activity.watching("you"))

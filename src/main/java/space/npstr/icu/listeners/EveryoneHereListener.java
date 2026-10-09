@@ -17,6 +17,8 @@
 
 package space.npstr.icu.listeners;
 
+import java.util.HashSet;
+import java.util.Set;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -24,6 +26,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.utils.data.DataArray;
 import org.springframework.stereotype.Component;
 import space.npstr.icu.db.entities.GuildSettings;
 import space.npstr.icu.db.entities.GuildSettingsRepository;
@@ -48,11 +51,23 @@ public class EveryoneHereListener extends ThreadedListener {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.isFromGuild()) {
-            getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event));
+            Set<Long> mentionedRoleIds = mentionedRoleIds(event);
+            getExecutor(event.getGuild()).execute(() -> guildMessageReceived(event, mentionedRoleIds));
         }
     }
 
-    private void guildMessageReceived(MessageReceivedEvent event) {
+    // Without the MESSAGE_CONTENT intent the message content is empty, and JDA parses role mentions from the content.
+    // Discord still sends the mentioned role ids though, so read them from the raw payload.
+    private Set<Long> mentionedRoleIds(MessageReceivedEvent event) {
+        Set<Long> roleIds = new HashSet<>();
+        DataArray mentionRoles = event.getRawData().getObject("d").getArray("mention_roles");
+        for (int i = 0; i < mentionRoles.length(); i++) {
+            roleIds.add(mentionRoles.getUnsignedLong(i));
+        }
+        return roleIds;
+    }
+
+    private void guildMessageReceived(MessageReceivedEvent event, Set<Long> mentionedRoleIds) {
         if (event.getAuthor().isBot()) {
             return;
         }
@@ -74,7 +89,7 @@ public class EveryoneHereListener extends ThreadedListener {
         Long hereId = guildSettings.getHereRoleId();
         Role hereRole = hereId != null ? guild.getRoleById(hereId) : null;
         if (hereRole != null
-            && (msg.getMentions().mentionsEveryone() || msg.getMentions().isMentioned(hereRole))
+            && (msg.getMentions().mentionsEveryone() || mentionedRoleIds.contains(hereRole.getIdLong()))
             && !member.getRoles().contains(hereRole)) {
             addRole(msg, member, hereRole);
         }
@@ -82,7 +97,7 @@ public class EveryoneHereListener extends ThreadedListener {
         Long everyoneId = guildSettings.getEveryoneRoleId();
         Role everyoneRole = everyoneId != null ? guild.getRoleById(everyoneId) : null;
         if (everyoneRole != null
-            && (msg.getMentions().mentionsEveryone() || msg.getMentions().isMentioned(everyoneRole))
+            && (msg.getMentions().mentionsEveryone() || mentionedRoleIds.contains(everyoneRole.getIdLong()))
             && !member.getRoles().contains(everyoneRole)) {
             addRole(msg, member, everyoneRole);
         }
