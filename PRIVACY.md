@@ -4,8 +4,10 @@ i.c.u. is a private Discord moderation bot. It is not publicly listed and only r
 
 ## What data is stored
 
-For members of servers the bot is in:
-- Server ID, user ID, role IDs and nickname. These are saved when a member's roles or nickname change, and when they leave the server.
+For members of servers the bot is in who have at least one role or a nickname:
+- Server ID, user ID, role IDs and nickname. These are saved when the bot starts, when a member's roles or nickname change, and when they leave the server.
+
+Members without any roles or nickname have nothing to restore, so nothing is stored for them. If a member loses all their roles and their nickname, their stored data is deleted.
 
 For bans issued through the bot's global ban feature:
 - The banned user's ID, the ban reason, and when the ban was created.

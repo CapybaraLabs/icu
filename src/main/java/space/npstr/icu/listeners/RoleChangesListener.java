@@ -102,7 +102,7 @@ public class RoleChangesListener extends ThreadedListener {
 
     private void updateMember(Member member) {
         transactionTemplate.executeWithoutResult(__ ->
-            memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
+            memberRolesRepository.saveOrDelete(member)
         );
     }
 
@@ -167,11 +167,7 @@ public class RoleChangesListener extends ThreadedListener {
     @Override
     public void onGuildJoin(GuildJoinEvent event) {
         getExecutor(event.getGuild()).execute(() ->
-            event.getGuild().getMemberCache().stream().forEach(member ->
-                transactionTemplate.executeWithoutResult(__ ->
-                    memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
-                )
-            )
+            event.getGuild().getMemberCache().stream().forEach(this::updateMember)
         );
     }
 
@@ -180,11 +176,7 @@ public class RoleChangesListener extends ThreadedListener {
         DEFAULT_EXEC.execute(() ->
             event.getJDA().getGuildCache().stream()
                 .flatMap(guild -> guild.getMemberCache().stream())
-                .forEach(member ->
-                    transactionTemplate.executeWithoutResult(__ ->
-                        memberRolesRepository.findOrCreateById(MemberRoles.key(member)).set(member)
-                    )
-                )
+                .forEach(this::updateMember)
         );
     }
 }

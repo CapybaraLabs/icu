@@ -149,6 +149,13 @@ public class MemberRoles {
         setNickname(member.getNickname());
     }
 
+    /**
+     * @return true if there is nothing to restore for this member
+     */
+    public boolean isEmpty() {
+        return roleIds.isEmpty() && (nickname == null || nickname.isEmpty());
+    }
+
 
     @Embeddable
     public static class MemberComposite implements Serializable {

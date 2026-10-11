@@ -888,7 +888,12 @@ public class CommandsListener extends ThreadedListener {
             }
             User targetUser = mentionedUsers.iterator().next();
 
-            memberRolesRepo.findOrCreateById(MemberRoles.key(guild, targetUser)).setRoleIds(List.of());
+            memberRolesRepo.findById(MemberRoles.key(guild, targetUser)).ifPresent(memberRoles -> {
+                memberRoles.setRoleIds(List.of());
+                if (memberRoles.isEmpty()) {
+                    memberRolesRepo.delete(memberRoles);
+                }
+            });
             event.getChannel().sendMessage("👌👌🏻👌🏼👌🏽👌🏾👌🏿").queue();
         } else if (content.contains("status") || content.contains("config")) {
             String output = "";

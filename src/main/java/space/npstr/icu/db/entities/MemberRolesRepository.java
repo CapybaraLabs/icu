@@ -17,13 +17,25 @@
 
 package space.npstr.icu.db.entities;
 
+import java.util.Optional;
+import net.dv8tion.jda.api.entities.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberRolesRepository extends JpaRepository<MemberRoles, MemberRoles.MemberComposite> {
 
-	default MemberRoles findOrCreateById(MemberRoles.MemberComposite id) {
-		return findById(id)
-			.orElseGet(() -> this.save(new MemberRoles(id)));
+	/**
+	 * Store the member's current roles and nickname, or delete the row if there is nothing to restore.
+	 */
+	default void saveOrDelete(Member member) {
+		MemberRoles.MemberComposite id = MemberRoles.key(member);
+		Optional<MemberRoles> existing = findById(id);
+		MemberRoles memberRoles = existing.orElseGet(() -> new MemberRoles(id));
+		memberRoles.set(member);
+		if (!memberRoles.isEmpty()) {
+			save(memberRoles);
+		} else {
+			existing.ifPresent(this::delete);
+		}
 	}
 
 }
